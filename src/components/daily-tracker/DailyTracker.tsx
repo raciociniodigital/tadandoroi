@@ -58,12 +58,21 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         onDataSubmit(date, data);
       }
       
+      // After data is saved, we'd normally update our central data store
+      // or use a reactive library like React Query to automatically refresh
+      // the Records table component.
+      
+      // For this demo, we'll just show a success message
       toast({
         title: "Dados salvos com sucesso",
         description: `Registro para ${format(date, 'PPP', { locale: ptBR })} foi salvo.`,
       });
       
       setIsSubmitting(false);
+      
+      // In a real app, this would trigger an update to the Records table
+      // For example, triggering a refetch of the data:
+      // queryClient.invalidateQueries(['dailyRecords']);
     }, 1000);
   };
 

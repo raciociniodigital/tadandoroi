@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   CalendarDays, 
@@ -19,7 +18,6 @@ import {
 import DataCard from '@/components/ui/DataCard';
 import ChartContainer from '@/components/ui/ChartContainer';
 
-// Sample data for the charts
 const generateSampleData = (days: number) => {
   const data = [];
   const today = new Date();
@@ -54,8 +52,8 @@ const Dashboard: React.FC<DashboardProps> = () => {
     from: subDays(new Date(), 7),
     to: new Date(),
   });
+  const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
 
-  // Generate data based on selected period
   const getDataForPeriod = () => {
     switch (selectedPeriod) {
       case 'today':
@@ -75,7 +73,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
 
   const data = getDataForPeriod();
   
-  // Calculate summary data
   const calculateSummary = () => {
     const totalInvestment = data.reduce((sum, item) => sum + item.investment, 0);
     const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
@@ -94,7 +91,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
   
   const summary = calculateSummary();
   
-  // Period label for display
   const getPeriodLabel = () => {
     switch (selectedPeriod) {
       case 'today':
@@ -104,7 +100,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
       case '30d':
         return 'Últimos 30 dias';
       case 'custom':
-        return `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`;
+        return `${format(dateRange.from, 'dd/MM/yy')} - ${format(dateRange.to, 'dd/MM/yy')}`;
       default:
         return 'Últimos 7 dias';
     }
@@ -112,7 +108,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header with period selection */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-1">Dashboard</h1>
@@ -124,10 +119,10 @@ const Dashboard: React.FC<DashboardProps> = () => {
         <div className="flex flex-wrap gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-[180px]">
-                <CalendarDays className="mr-2 h-4 w-4" />
-                {getPeriodLabel()}
-                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+              <Button variant="outline" className="w-[180px] truncate">
+                <CalendarDays className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate">{getPeriodLabel()}</span>
+                <ChevronDown className="ml-2 h-4 w-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -140,7 +135,10 @@ const Dashboard: React.FC<DashboardProps> = () => {
               <DropdownMenuItem onClick={() => setSelectedPeriod('30d')}>
                 Últimos 30 dias
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedPeriod('custom')}>
+              <DropdownMenuItem onClick={() => {
+                setSelectedPeriod('custom');
+                setIsSelectingRange(true);
+              }}>
                 Período personalizado
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -155,6 +153,12 @@ const Dashboard: React.FC<DashboardProps> = () => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
+                <div className="p-2 text-sm text-muted-foreground border-b">
+                  {isSelectingRange 
+                    ? "Selecione data inicial e final" 
+                    : `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`
+                  }
+                </div>
                 <Calendar
                   mode="range"
                   selected={{
@@ -164,10 +168,12 @@ const Dashboard: React.FC<DashboardProps> = () => {
                   onSelect={(range: any) => {
                     if (range?.from && range?.to) {
                       setDateRange({ from: range.from, to: range.to });
+                      setIsSelectingRange(false);
                     }
                   }}
                   locale={ptBR}
                   initialFocus
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
@@ -175,7 +181,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
         </div>
       </div>
       
-      {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <DataCard
           title="Investimento"
@@ -218,7 +223,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
         />
       </div>
       
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ChartContainer
           title="Receita vs. Investimento"

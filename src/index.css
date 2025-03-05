@@ -105,4 +105,22 @@
   .animation-delay-500 {
     animation-delay: 500ms;
   }
+
+  /* Records table styles */
+  .records-table th {
+    @apply font-semibold text-sm py-3 px-4;
+  }
+  
+  .records-table td {
+    @apply py-3 px-4 text-sm;
+  }
+  
+  .records-table tr:nth-child(even) {
+    @apply bg-muted/10;
+  }
+  
+  .records-table tr:hover {
+    @apply bg-muted/30;
+  }
 }
+
