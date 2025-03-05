@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   CalendarDays, 
   Calendar as CalendarIcon, 
-  ChevronDown 
+  ChevronDown,
+  Info
 } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -15,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/components/ui/use-toast';
 import DataCard from '@/components/ui/DataCard';
 import ChartContainer from '@/components/ui/ChartContainer';
 
@@ -52,7 +54,8 @@ const Dashboard: React.FC<DashboardProps> = () => {
     from: subDays(new Date(), 7),
     to: new Date(),
   });
-  const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
+  const { toast } = useToast();
 
   const getDataForPeriod = () => {
     switch (selectedPeriod) {
@@ -106,6 +109,25 @@ const Dashboard: React.FC<DashboardProps> = () => {
     }
   };
 
+  const handleRangeSelect = (range: { from?: Date; to?: Date } | undefined) => {
+    if (!range) return;
+
+    if (range.from && range.to) {
+      setDateRange({ from: range.from, to: range.to });
+      setIsCalendarOpen(false);
+    } else if (range.from) {
+      toast({
+        title: "Selecione a data final",
+        description: "Você selecionou a data inicial. Agora clique em uma data para definir o fim do período.",
+      });
+    }
+  };
+
+  const handleCustomPeriodClick = () => {
+    setSelectedPeriod('custom');
+    setIsCalendarOpen(true);
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -135,17 +157,14 @@ const Dashboard: React.FC<DashboardProps> = () => {
               <DropdownMenuItem onClick={() => setSelectedPeriod('30d')}>
                 Últimos 30 dias
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {
-                setSelectedPeriod('custom');
-                setIsSelectingRange(true);
-              }}>
+              <DropdownMenuItem onClick={handleCustomPeriodClick}>
                 Período personalizado
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
           {selectedPeriod === 'custom' && (
-            <Popover>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline">
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -153,11 +172,17 @@ const Dashboard: React.FC<DashboardProps> = () => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
-                <div className="p-2 text-sm text-muted-foreground border-b">
-                  {isSelectingRange 
-                    ? "Selecione data inicial e final" 
-                    : `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`
-                  }
+                <div className="p-2 text-sm border-b flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {dateRange.from && dateRange.to 
+                      ? `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`
+                      : "Selecione data inicial e final"
+                    }
+                  </span>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <Info className="h-3 w-3 mr-1" />
+                    <span>Selecione início e fim</span>
+                  </div>
                 </div>
                 <Calendar
                   mode="range"
@@ -165,12 +190,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
                     from: dateRange.from,
                     to: dateRange.to,
                   }}
-                  onSelect={(range: any) => {
-                    if (range?.from && range?.to) {
-                      setDateRange({ from: range.from, to: range.to });
-                      setIsSelectingRange(false);
-                    }
-                  }}
+                  onSelect={handleRangeSelect}
                   locale={ptBR}
                   initialFocus
                   className="pointer-events-auto"
