@@ -6,9 +6,9 @@ import {
   Calendar, 
   ChevronLeft, 
   ChevronRight, 
+  FileSpreadsheet,
   LogOut, 
-  Settings, 
-  TrendingUp
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -45,16 +45,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       active: location.pathname === '/analytics',
     },
     {
-      name: 'Estatísticas', 
-      path: '/stats', 
-      icon: TrendingUp,
-      active: location.pathname === '/stats',
+      name: 'Tabela de Registros', 
+      path: '/records', 
+      icon: FileSpreadsheet,
+      active: location.pathname === '/records',
     },
     { 
-      name: 'Configurações', 
-      path: '/settings', 
-      icon: Settings,
-      active: location.pathname === '/settings',
+      name: 'Perfil', 
+      path: '/profile', 
+      icon: User,
+      active: location.pathname === '/profile',
     }
   ];
 

@@ -9,6 +9,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import DailyTracking from "./pages/DailyTracking";
 import Analytics from "./pages/Analytics";
+import Records from "./pages/Records";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +27,8 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/daily" element={<DailyTracking />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/records" element={<Records />} />
+          <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
