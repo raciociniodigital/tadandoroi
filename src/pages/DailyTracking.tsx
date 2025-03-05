@@ -1,6 +1,6 @@
 
 import Layout from '@/components/Layout';
-import DailyTracker from '@/components/dashboard/DailyTracker';
+import DailyTracker from '@/components/daily-tracker/DailyTracker';
 
 const DailyTracking = () => {
   return (
