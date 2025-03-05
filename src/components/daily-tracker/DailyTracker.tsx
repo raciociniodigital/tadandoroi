@@ -21,6 +21,10 @@ interface DailyTrackerProps {
   onDataSubmit?: (date: Date, data: TrackingData) => void;
 }
 
+// Mock storage for daily records
+// In a real app, this would be in a database or global state management
+export const dailyRecords: Record<string, TrackingData> = {};
+
 const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +45,22 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     roas
   } = useTrackingCalculations();
 
+  // Check if there's already data for this day and pre-fill form
+  React.useEffect(() => {
+    const dateKey = format(date, 'yyyy-MM-dd');
+    if (dailyRecords[dateKey]) {
+      const record = dailyRecords[dateKey];
+      setInvestment(record.investment.toString());
+      setSales(record.sales.toString());
+      setRevenue(record.revenue.toString());
+    } else {
+      // Clear form if no data exists for this day
+      setInvestment('');
+      setSales('');
+      setRevenue('');
+    }
+  }, [date, setInvestment, setSales, setRevenue]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -52,17 +72,18 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
       revenue: revenueValue,
     };
 
+    // Format date as string key for storage
+    const dateKey = format(date, 'yyyy-MM-dd');
+
+    // Save to our mock storage
+    dailyRecords[dateKey] = data;
+
     // Simulate API call
     setTimeout(() => {
       if (onDataSubmit) {
         onDataSubmit(date, data);
       }
       
-      // After data is saved, we'd normally update our central data store
-      // or use a reactive library like React Query to automatically refresh
-      // the Records table component.
-      
-      // For this demo, we'll just show a success message
       toast({
         title: "Dados salvos com sucesso",
         description: `Registro para ${format(date, 'PPP', { locale: ptBR })} foi salvo.`,
@@ -70,10 +91,10 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
       
       setIsSubmitting(false);
       
-      // In a real app, this would trigger an update to the Records table
-      // For example, triggering a refetch of the data:
-      // queryClient.invalidateQueries(['dailyRecords']);
-    }, 1000);
+      // In a real app, this would trigger a refetch or state update
+      // For this demo, we're using the dailyRecords object directly
+      console.log("Daily records updated:", dailyRecords);
+    }, 500);
   };
 
   return (

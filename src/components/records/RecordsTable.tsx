@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -7,28 +7,21 @@ import {
   Save,
   X
 } from 'lucide-react';
-import { format, addMonths, subMonths, getDaysInMonth, startOfMonth, getMonth, getYear } from 'date-fns';
+import { format, addMonths, subMonths, getDaysInMonth, startOfMonth, getMonth, getYear, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { dailyRecords } from '@/components/daily-tracker/DailyTracker';
+import { useNavigate } from 'react-router-dom';
 
-// Mock data for demonstration
-// In a real app, this would come from your database
 interface DailyRecord {
   date: Date;
   investment: number;
   sales: number;
   revenue: number;
 }
-
-const mockData: DailyRecord[] = Array.from({ length: 30 }).map((_, i) => ({
-  date: new Date(2023, 6, i + 1),
-  investment: Math.round(Math.random() * 1000),
-  sales: Math.round(Math.random() * 20),
-  revenue: Math.round(Math.random() * 3000),
-}));
 
 const RecordsTable = () => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -42,7 +35,25 @@ const RecordsTable = () => {
     sales: '',
     revenue: ''
   });
+  const [records, setRecords] = useState<DailyRecord[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  // Load records from our storage
+  useEffect(() => {
+    const loadedRecords: DailyRecord[] = [];
+    
+    Object.entries(dailyRecords).forEach(([dateStr, data]) => {
+      loadedRecords.push({
+        date: parseISO(dateStr),
+        investment: data.investment,
+        sales: data.sales,
+        revenue: data.revenue
+      });
+    });
+    
+    setRecords(loadedRecords);
+  }, [currentMonth, dailyRecords]);
   
   const goToPreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
@@ -56,8 +67,7 @@ const RecordsTable = () => {
   const startDay = startOfMonth(currentMonth);
   
   // Filter records for the current month
-  // In a real app, this would filter from your database
-  const currentMonthRecords = mockData.filter((record) => 
+  const currentMonthRecords = records.filter((record) => 
     getMonth(record.date) === getMonth(currentMonth) && 
     getYear(record.date) === getYear(currentMonth)
   );
@@ -115,12 +125,51 @@ const RecordsTable = () => {
   };
 
   const handleSave = () => {
-    // Here you would normally update your database
-    // For this demo, we'll just show a toast
+    if (editingDay === null) return;
+    
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const dateToEdit = new Date(year, month, editingDay);
+    const dateKey = format(dateToEdit, 'yyyy-MM-dd');
+    
+    // Update the dailyRecords
+    dailyRecords[dateKey] = {
+      investment: parseFloat(editData.investment) || 0,
+      sales: parseInt(editData.sales) || 0,
+      revenue: parseFloat(editData.revenue) || 0
+    };
+    
+    // Update local records
+    const updatedRecords = [...records];
+    const existingIndex = updatedRecords.findIndex(r => 
+      r.date.getDate() === editingDay && 
+      getMonth(r.date) === getMonth(currentMonth) && 
+      getYear(r.date) === getYear(currentMonth)
+    );
+    
+    if (existingIndex >= 0) {
+      updatedRecords[existingIndex] = {
+        date: dateToEdit,
+        investment: parseFloat(editData.investment) || 0,
+        sales: parseInt(editData.sales) || 0,
+        revenue: parseFloat(editData.revenue) || 0
+      };
+    } else {
+      updatedRecords.push({
+        date: dateToEdit,
+        investment: parseFloat(editData.investment) || 0,
+        sales: parseInt(editData.sales) || 0,
+        revenue: parseFloat(editData.revenue) || 0
+      });
+    }
+    
+    setRecords(updatedRecords);
+    
     toast({
       title: "Dados atualizados",
       description: `Os dados do dia ${editingDay} foram atualizados com sucesso.`,
     });
+    
     setEditingDay(null);
   };
 
@@ -133,6 +182,19 @@ const RecordsTable = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleAddNew = (day: number) => {
+    // Navigate to the daily tracking page with the selected date
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const selectedDate = new Date(year, month, day);
+    
+    // In a real app, we would pass the date through state management or URL
+    // For this demo, we'll just navigate to the page
+    navigate('/daily');
+    
+    // Alternatively, you could open a dialog/modal to add data directly
   };
 
   return (
@@ -164,7 +226,7 @@ const RecordsTable = () => {
       
       <div className="rounded-lg border bg-card overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse records-table">
             <thead>
               <tr className="bg-muted/50">
                 <th className="py-3 px-4 text-left font-medium border-r">Dia</th>
@@ -205,7 +267,7 @@ const RecordsTable = () => {
                           className="w-20 text-right"
                         />
                       </td>
-                      <td className="py-3 px-4 border-r">
+                      <td className="py-3 px-4 border-r text-right">
                         <Input
                           type="number"
                           value={editData.revenue}
@@ -262,7 +324,7 @@ const RecordsTable = () => {
                           : '-'}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        {day.investment !== null && (
+                        {day.investment !== null ? (
                           <Button 
                             size="sm" 
                             variant="ghost" 
@@ -270,6 +332,15 @@ const RecordsTable = () => {
                           >
                             <Edit className="h-4 w-4 mr-1" />
                             Editar
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleAddNew(day.day)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Adicionar
                           </Button>
                         )}
                       </td>
