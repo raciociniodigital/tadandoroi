@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
+import { DateRange } from 'react-day-picker';
 
 interface DateRangeSelectorProps {
   selectedPeriod: string;
@@ -28,7 +29,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   setDateRange,
 }) => {
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
-  const [tempDateRange, setTempDateRange] = useState<{ from?: Date; to?: Date }>({
+  const [tempDateRange, setTempDateRange] = useState<DateRange>({
     from: dateRange.from,
     to: dateRange.to
   });
@@ -56,20 +57,26 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
     }
   };
 
-  const handleRangeSelect = (range: { from?: Date; to?: Date } | undefined) => {
+  const handleRangeSelect = (range: DateRange | undefined) => {
     if (!range) return;
 
-    setTempDateRange(range);
+    // Ensure we maintain the required 'from' property
+    const newRange: DateRange = {
+      from: range.from || dateRange.from,
+      to: range.to
+    };
+    
+    setTempDateRange(newRange);
 
-    if (range.from && !range.to) {
+    if (newRange.from && !newRange.to) {
       toast({
         title: "Selecione a data final",
         description: "Você selecionou a data inicial. Agora clique em uma data para definir o fim do período.",
       });
-    } else if (range.from && range.to) {
+    } else if (newRange.from && newRange.to) {
       setDateRange({ 
-        from: range.from, 
-        to: range.to 
+        from: newRange.from, 
+        to: newRange.to 
       });
       
       // Fechar o popover somente quando ambas as datas estiverem selecionadas
@@ -152,6 +159,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             disabled={{
               before: new Date(2022, 0, 1), // Desabilita datas antes de 01/01/2022
             }}
+            className="pointer-events-auto"
           />
           <div className="p-2 border-t flex justify-between">
             <Button variant="outline" size="sm" onClick={cancelSelection}>
