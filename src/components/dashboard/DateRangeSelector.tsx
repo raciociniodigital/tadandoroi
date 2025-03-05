@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, Calendar as CalendarIcon, ChevronDown, Info } from 'lucide-react';
 import { format } from 'date-fns';
@@ -29,18 +28,21 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   setDateRange,
 }) => {
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
-  const [tempDateRange, setTempDateRange] = useState<DateRange>({
-    from: dateRange.from,
-    to: dateRange.to
-  });
+  const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>(undefined);
   const { toast } = useToast();
 
-  // Reset temporary date range when period changes
+  // Reset temporary date range when period changes or when opening the popover
   useEffect(() => {
     if (selectedPeriod === 'custom') {
-      setTempDateRange({ from: dateRange.from, to: dateRange.to });
+      if (!isCalendarOpen) {
+        // Keep the current selection when the popover is closed
+        setTempDateRange({ from: dateRange.from, to: dateRange.to });
+      } else {
+        // Clear the selection when opening the calendar
+        setTempDateRange(undefined);
+      }
     }
-  }, [selectedPeriod, dateRange]);
+  }, [selectedPeriod, dateRange, isCalendarOpen]);
 
   const getPeriodLabel = () => {
     switch (selectedPeriod) {
@@ -58,44 +60,43 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   };
 
   const handleRangeSelect = (range: DateRange | undefined) => {
-    if (!range) return;
+    if (!range) {
+      setTempDateRange(undefined);
+      return;
+    }
 
-    // Ensure we maintain the required 'from' property
-    const newRange: DateRange = {
-      from: range.from || dateRange.from,
-      to: range.to
-    };
-    
-    setTempDateRange(newRange);
+    setTempDateRange(range);
 
-    if (newRange.from && !newRange.to) {
+    if (range.from && !range.to) {
       toast({
         title: "Selecione a data final",
         description: "Você selecionou a data inicial. Agora clique em uma data para definir o fim do período.",
       });
-    } else if (newRange.from && newRange.to) {
-      setDateRange({ 
-        from: newRange.from, 
-        to: newRange.to 
-      });
-      
-      // Fechar o popover somente quando ambas as datas estiverem selecionadas
-      setTimeout(() => {
-        setIsCalendarOpen(false);
-      }, 400);
+    } else if (range.from && range.to) {
+      // Não fecha automaticamente, deixa o usuário confirmar clicando em "Aplicar"
     }
   };
 
   const handleCustomPeriodClick = () => {
     setSelectedPeriod('custom');
-    // Resetar a seleção temporária ao abrir para período personalizado
-    setTempDateRange({ from: dateRange.from, to: dateRange.to });
+    // Não definimos tempDateRange aqui, ele será limpo quando o popover abrir via useEffect
     setIsCalendarOpen(true);
   };
 
   const cancelSelection = () => {
+    // Restaurar a seleção anterior ao fechar
     setTempDateRange({ from: dateRange.from, to: dateRange.to });
     setIsCalendarOpen(false);
+  };
+
+  const applySelection = () => {
+    if (tempDateRange?.from && tempDateRange?.to) {
+      setDateRange({ 
+        from: tempDateRange.from, 
+        to: tempDateRange.to 
+      });
+      setIsCalendarOpen(false);
+    }
   };
 
   return (
@@ -124,7 +125,13 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+      <Popover open={isCalendarOpen} onOpenChange={(open) => {
+        setIsCalendarOpen(open);
+        if (!open) {
+          // Quando fechamos o popover sem aplicar, restauramos a seleção anterior
+          setTempDateRange({ from: dateRange.from, to: dateRange.to });
+        }
+      }}>
         <PopoverTrigger asChild>
           <Button 
             variant="outline" 
@@ -138,9 +145,9 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
         <PopoverContent className="w-auto p-0" align="end">
           <div className="p-2 text-sm border-b flex items-center justify-between">
             <span className="text-muted-foreground">
-              {tempDateRange.from && tempDateRange.to 
+              {tempDateRange?.from && tempDateRange?.to 
                 ? `${format(tempDateRange.from, 'dd/MM/yyyy')} - ${format(tempDateRange.to, 'dd/MM/yyyy')}`
-                : tempDateRange.from 
+                : tempDateRange?.from 
                   ? `${format(tempDateRange.from, 'dd/MM/yyyy')} - Selecione data final`
                   : "Selecione data inicial e final"
               }
@@ -167,13 +174,8 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             </Button>
             <Button 
               size="sm" 
-              disabled={!tempDateRange.from || !tempDateRange.to}
-              onClick={() => {
-                if (tempDateRange.from && tempDateRange.to) {
-                  setDateRange({ from: tempDateRange.from, to: tempDateRange.to });
-                  setIsCalendarOpen(false);
-                }
-              }}
+              disabled={!tempDateRange?.from || !tempDateRange?.to}
+              onClick={applySelection}
             >
               Aplicar
             </Button>
