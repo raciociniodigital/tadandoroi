@@ -1,14 +1,16 @@
 
-import { useState } from 'react';
-import { format, subDays } from 'date-fns';
+import { useState, useCallback } from 'react';
+import { format, subDays, startOfDay, endOfDay, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export const generateSampleData = (days: number) => {
+export const generateSampleData = (startDate: Date, endDate: Date) => {
   const data = [];
-  const today = new Date();
+  const days = differenceInDays(endDate, startDate) + 1;
   
-  for (let i = days; i >= 0; i--) {
-    const date = subDays(today, i);
+  for (let i = 0; i < days; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    
     const investment = Math.random() * 300 + 200;
     const sales = Math.floor(Math.random() * 20) + 5;
     const revenue = sales * (Math.random() * 100 + 50);
@@ -30,32 +32,42 @@ export const generateSampleData = (days: number) => {
 };
 
 export const useDashboardData = () => {
+  const today = new Date();
   const [selectedPeriod, setSelectedPeriod] = useState<string>('7d');
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: subDays(new Date(), 7),
-    to: new Date(),
+    from: subDays(today, 7),
+    to: today,
   });
 
-  const getDataForPeriod = () => {
+  const getDataForPeriod = useCallback(() => {
+    let startDate;
+    let endDate = endOfDay(today);
+    
     switch (selectedPeriod) {
       case 'today':
-        return generateSampleData(0);
+        startDate = startOfDay(today);
+        endDate = endOfDay(today);
+        break;
       case '7d':
-        return generateSampleData(7);
+        startDate = startOfDay(subDays(today, 7));
+        break;
       case '30d':
-        return generateSampleData(30);
+        startDate = startOfDay(subDays(today, 30));
+        break;
       case 'custom':
-        const diffTime = Math.abs(dateRange.to.getTime() - dateRange.from.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return generateSampleData(diffDays);
+        startDate = startOfDay(dateRange.from);
+        endDate = endOfDay(dateRange.to);
+        break;
       default:
-        return generateSampleData(7);
+        startDate = startOfDay(subDays(today, 7));
     }
-  };
+    
+    return generateSampleData(startDate, endDate);
+  }, [selectedPeriod, dateRange, today]);
   
   const data = getDataForPeriod();
   
-  const calculateSummary = () => {
+  const calculateSummary = useCallback(() => {
     const totalInvestment = data.reduce((sum, item) => sum + item.investment, 0);
     const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
     const totalSales = data.reduce((sum, item) => sum + item.sales, 0);
@@ -69,7 +81,7 @@ export const useDashboardData = () => {
       profit: totalProfit.toFixed(2),
       roas: averageRoas.toFixed(2)
     };
-  };
+  }, [data]);
   
   const summary = calculateSummary();
 
