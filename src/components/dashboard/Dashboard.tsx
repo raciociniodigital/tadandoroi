@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { 
-  Calendar, 
   CalendarDays, 
   Calendar as CalendarIcon, 
   ChevronDown 
@@ -9,6 +8,7 @@ import {
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   DropdownMenu,
@@ -161,7 +161,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
                     from: dateRange.from,
                     to: dateRange.to,
                   }}
-                  onSelect={(range) => {
+                  onSelect={(range: any) => {
                     if (range?.from && range?.to) {
                       setDateRange({ from: range.from, to: range.to });
                     }
