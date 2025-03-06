@@ -45,7 +45,7 @@ const Register = () => {
               footerActionLink: "text-primary hover:underline before:content-['Entrar']",
               socialButtonsBlockButton: "border border-border",
               socialButtonsBlockButtonText: "text-foreground",
-              socialButtonsBlockButtonGoogle: "bg-white text-gray-900 hover:bg-gray-50 !important",
+              socialButtonsBlockButtonGoogle: "!bg-white !text-gray-900 hover:!bg-gray-50",
               footerAction: "text-foreground before:content-['Já_tem_uma_conta?_']",
               dividerText: "text-muted-foreground before:content-['ou']",
               socialButtonsBlockButtonText__google: "text-gray-900 before:content-['Continuar_com_Google']",
