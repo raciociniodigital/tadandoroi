@@ -48,7 +48,10 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
   // Fetch data for selected date when date changes or user signs in
   useEffect(() => {
     const fetchDailyRecord = async () => {
-      if (!isSignedIn || !userId) return;
+      if (!isSignedIn || !userId) {
+        setIsLoading(false);
+        return;
+      }
       
       setIsLoading(true);
       try {

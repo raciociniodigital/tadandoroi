@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   format, 
@@ -43,7 +42,10 @@ export const useRecordsData = () => {
   // Fetch records from Supabase when the month changes or user signs in
   useEffect(() => {
     const fetchRecords = async () => {
-      if (!isSignedIn || !userId) return;
+      if (!isSignedIn || !userId) {
+        setIsLoading(false);
+        return;
+      }
       
       setIsLoading(true);
       try {
