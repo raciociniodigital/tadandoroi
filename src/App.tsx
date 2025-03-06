@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
-import AuthSync from "./components/auth/AuthSync";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -14,6 +13,7 @@ import Analytics from "./pages/Analytics";
 import Records from "./pages/Records";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import AuthSync from "./components/auth/AuthSync";
 
 const queryClient = new QueryClient();
 
@@ -37,53 +37,55 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Rotas públicas */}
-          <Route path="/" element={<Index />} />
-          
-          {/* Auth routes */}
-          <Route path="/login" element={
-            <>
-              <SignedIn><Navigate to="/daily" replace /></SignedIn>
-              <SignedOut><Login /></SignedOut>
-            </>
-          } />
-          
-          <Route path="/register" element={
-            <>
-              <SignedIn><Navigate to="/daily" replace /></SignedIn>
-              <SignedOut><Register /></SignedOut>
-            </>
-          } />
+        <AuthSync>
+          <Routes>
+            {/* Rotas públicas */}
+            <Route path="/" element={<Index />} />
+            
+            {/* Auth routes */}
+            <Route path="/login" element={
+              <>
+                <SignedIn><Navigate to="/daily" replace /></SignedIn>
+                <SignedOut><Login /></SignedOut>
+              </>
+            } />
+            
+            <Route path="/register" element={
+              <>
+                <SignedIn><Navigate to="/daily" replace /></SignedIn>
+                <SignedOut><Register /></SignedOut>
+              </>
+            } />
 
-          {/* Rotas protegidas */}
-          <Route path="/daily" element={
-            <ProtectedRoute>
-              <DailyTracking />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/analytics" element={
-            <ProtectedRoute>
-              <Analytics />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/records" element={
-            <ProtectedRoute>
-              <Records />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-          
-          {/* Rota para todas as outras páginas */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* Rotas protegidas */}
+            <Route path="/daily" element={
+              <ProtectedRoute>
+                <DailyTracking />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/analytics" element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/records" element={
+              <ProtectedRoute>
+                <Records />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            
+            {/* Rota para todas as outras páginas */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthSync>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -19,7 +19,7 @@ const Login = () => {
           path="/login"
           routing="path"
           signUpUrl="/register"
-          afterSignInUrl="/daily"
+          redirectUrl="/daily"
           appearance={{
             elements: {
               rootBox: "w-full max-w-md mx-auto",
