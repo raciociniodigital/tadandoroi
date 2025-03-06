@@ -4,18 +4,33 @@
 <head>
   <title>Clerk Supabase JWT Template</title>
   <script>
-    // Este script permite que o Clerk gere JWTs compatíveis com o Supabase
+    // Este script configura o template JWT para Supabase
     window.addEventListener('load', function() {
       if (window.Clerk) {
-        // Definir template do token assim que o Clerk for carregado
-        window.Clerk.addListener(({ user, session }) => {
-          console.log("Clerk carregado, configurando template JWT para Supabase");
+        console.log("Clerk detectado, configurando template JWT para Supabase");
+        
+        // Define template assim que o Clerk for carregado
+        window.Clerk.addListener(({ session }) => {
           if (session) {
             try {
+              console.log("Sessão do Clerk disponível, configurando template JWT");
+              
               // Obter token com template do Supabase
               window.Clerk.session.getToken({ template: 'supabase' })
                 .then(token => {
-                  console.log("Template JWT para Supabase configurado com sucesso");
+                  if (token) {
+                    console.log("Template JWT para Supabase configurado com sucesso");
+                    
+                    // Armazenar informação de que o template foi configurado
+                    localStorage.setItem('clerk_supabase_template_configured', 'true');
+                    
+                    // Fechar janela após configuração bem-sucedida (opcional)
+                    setTimeout(() => {
+                      window.close();
+                    }, 3000);
+                  } else {
+                    console.error("Token não recebido do Clerk");
+                  }
                 })
                 .catch(error => {
                   console.error("Erro ao configurar template JWT:", error);
@@ -23,20 +38,22 @@
             } catch (error) {
               console.error("Erro ao acessar sessão do Clerk:", error);
             }
+          } else {
+            console.log("Nenhuma sessão do Clerk disponível");
           }
         });
       } else {
-        console.warn("Clerk não está disponível na janela");
+        console.error("Clerk não está disponível na janela");
       }
     });
   </script>
 </head>
 <body>
-  <!-- Esta página é apenas um auxiliar para a integração Clerk-Supabase -->
   <div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;">
     <h1>Configuração do JWT para Supabase</h1>
     <p>Esta página configura o template JWT para integração entre Clerk e Supabase.</p>
-    <p>Você pode fechar esta janela e voltar para a aplicação principal.</p>
+    <p>Esta janela será fechada automaticamente após a configuração ser concluída.</p>
+    <p style="margin-top: 30px; color: #666;">Se a janela não fechar automaticamente, você pode fechá-la manualmente.</p>
   </div>
 </body>
 </html>

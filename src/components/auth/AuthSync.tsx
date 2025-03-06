@@ -3,8 +3,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
-import { useAuthSync } from '@/hooks/useAuthSync';
-import { getClerkToken, setSupabaseToken } from '@/utils/supabaseAuth';
+import { syncSupabaseAuth } from '@/utils/supabaseAuth';
 
 interface AuthSyncProps {
   children: React.ReactNode;
@@ -15,35 +14,11 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
-  
-  // Use o hook de sincronização
-  const authSync = useAuthSync();
 
   useEffect(() => {
     console.log("AuthSync: isSignedIn =", isSignedIn, "isLoaded =", isLoaded, "path =", location.pathname);
     
-    const syncToken = async () => {
-      if (isSignedIn) {
-        try {
-          const token = await getClerkToken();
-          if (token) {
-            await setSupabaseToken(token);
-            console.log("AuthSync: Token do Supabase configurado com sucesso");
-          } else {
-            console.error("AuthSync: Não foi possível obter o token do Clerk");
-          }
-        } catch (error) {
-          console.error("AuthSync: Erro ao sincronizar token", error);
-        }
-      }
-    };
-    
-    // Sincronizar token quando o usuário estiver autenticado
-    if (isLoaded && isSignedIn) {
-      syncToken();
-    }
-    
-    // Não redirecionar na página inicial ou em páginas de autenticação
+    // Don't redirect on public paths
     const publicPaths = ['/', '/login', '/register'];
     const isPublicPath = publicPaths.includes(location.pathname);
     
@@ -55,13 +30,22 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
       });
       navigate('/login');
     }
+    
+    // If signed in, sync auth with Supabase
+    if (isLoaded && isSignedIn) {
+      syncSupabaseAuth().then(success => {
+        if (!success) {
+          console.warn('Não foi possível sincronizar autenticação com Supabase');
+        }
+      });
+    }
   }, [isSignedIn, isLoaded, navigate, toast, location.pathname]);
 
   if (!isLoaded) {
     return <div className="flex h-screen w-full items-center justify-center">Carregando...</div>;
   }
 
-  // Renderiza o conteúdo normalmente
+  // Render the content normally
   return <>{children}</>;
 };
 

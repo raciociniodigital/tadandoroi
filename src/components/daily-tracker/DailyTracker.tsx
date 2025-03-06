@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,7 +11,7 @@ import MetricsDisplay from './MetricsDisplay';
 import { useTrackingCalculations } from './useTrackingCalculations';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
-import { getClerkToken, setSupabaseToken } from '@/utils/supabaseAuth';
+import { syncSupabaseAuth } from '@/utils/supabaseAuth';
 
 interface TrackingData {
   investment: number;
@@ -59,10 +58,10 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         const dateStr = format(date, 'yyyy-MM-dd');
         console.log('Buscando dados para a data:', dateStr, 'com userId:', userId);
         
-        // Ensure we have a valid Supabase auth token
-        const token = await getClerkToken();
-        if (!token) {
-          console.error('Não foi possível obter token de autenticação');
+        // Make sure we're authenticated with Supabase
+        const authSynced = await syncSupabaseAuth();
+        if (!authSynced) {
+          console.error('Erro na autenticação com Supabase');
           toast({
             title: "Erro de autenticação",
             description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
@@ -71,9 +70,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
           setIsLoading(false);
           return;
         }
-        
-        // Garantir que o token esteja configurado antes de fazer a consulta
-        await setSupabaseToken(token);
         
         const { data: record, error } = await supabase
           .from('daily_records')
@@ -129,16 +125,11 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     setIsSubmitting(true);
 
     try {
-      // Ensure we have a valid Supabase auth token
-      const token = await getClerkToken();
-      if (!token) {
-        throw new Error('Não foi possível obter token de autenticação');
-      }
+      // Ensure we have a valid Supabase authentication
+      const authSynced = await syncSupabaseAuth();
       
-      // Configure a sessão do Supabase com o token
-      const success = await setSupabaseToken(token);
-      if (!success) {
-        throw new Error('Não foi possível configurar a sessão do Supabase');
+      if (!authSynced) {
+        throw new Error('Falha ao autenticar com o Supabase');
       }
       
       // Convert form data
