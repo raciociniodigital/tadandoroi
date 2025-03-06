@@ -5,14 +5,14 @@ import { ptBR } from 'date-fns/locale';
 import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import DatePicker from './DatePicker';
 import TrackingForm from './TrackingForm';
 import MetricsDisplay from './MetricsDisplay';
 import { useTrackingCalculations } from './useTrackingCalculations';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
-import { getClerkToken } from '@/utils/supabaseAuth';
+import { getClerkToken, setSupabaseToken } from '@/utils/supabaseAuth';
 
 interface TrackingData {
   investment: number;
@@ -62,7 +62,7 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         // Ensure we have a valid Supabase auth token
         const token = await getClerkToken();
         if (!token) {
-          console.error('No authentication token available');
+          console.error('Não foi possível obter token de autenticação');
           toast({
             title: "Erro de autenticação",
             description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
@@ -71,6 +71,9 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
           setIsLoading(false);
           return;
         }
+        
+        // Garantir que o token esteja configurado antes de fazer a consulta
+        await setSupabaseToken(token);
         
         const { data: record, error } = await supabase
           .from('daily_records')
@@ -129,7 +132,13 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
       // Ensure we have a valid Supabase auth token
       const token = await getClerkToken();
       if (!token) {
-        throw new Error('No authentication token available');
+        throw new Error('Não foi possível obter token de autenticação');
+      }
+      
+      // Configure a sessão do Supabase com o token
+      const success = await setSupabaseToken(token);
+      if (!success) {
+        throw new Error('Não foi possível configurar a sessão do Supabase');
       }
       
       // Convert form data

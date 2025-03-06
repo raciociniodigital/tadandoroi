@@ -13,7 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@clerk/clerk-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { getClerkToken } from '@/utils/supabaseAuth';
+import { getClerkToken, setSupabaseToken } from '@/utils/supabaseAuth';
 
 interface DailyRecord {
   id?: string;
@@ -54,7 +54,20 @@ export const useRecordsData = () => {
         // Ensure we have a valid Supabase auth token
         const token = await getClerkToken();
         if (!token) {
-          console.error('No authentication token available');
+          console.error('Não foi possível obter token de autenticação');
+          toast({
+            title: "Erro de autenticação",
+            description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // Configurar sessão do Supabase com o token antes de fazer a consulta
+        const success = await setSupabaseToken(token);
+        if (!success) {
+          console.error('Falha ao configurar token do Supabase');
           toast({
             title: "Erro de autenticação",
             description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
@@ -203,7 +216,13 @@ export const useRecordsData = () => {
       // Ensure we have a valid Supabase auth token
       const token = await getClerkToken();
       if (!token) {
-        throw new Error('No authentication token available');
+        throw new Error('Não foi possível obter token de autenticação');
+      }
+      
+      // Configurar sessão do Supabase com o token antes de fazer a inserção
+      const success = await setSupabaseToken(token);
+      if (!success) {
+        throw new Error('Falha ao configurar token do Supabase');
       }
       
       console.log('Atualizando dados para', dateStr, 'com o usuário', userId);

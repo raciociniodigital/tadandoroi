@@ -4,6 +4,7 @@ import { useAuth } from '@clerk/clerk-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuthSync } from '@/hooks/useAuthSync';
+import { getClerkToken, setSupabaseToken } from '@/utils/supabaseAuth';
 
 interface AuthSyncProps {
   children: React.ReactNode;
@@ -15,11 +16,32 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
   const { toast } = useToast();
   const location = useLocation();
   
-  // Use o hook de sincronização que melhoramos
+  // Use o hook de sincronização
   const authSync = useAuthSync();
 
   useEffect(() => {
     console.log("AuthSync: isSignedIn =", isSignedIn, "isLoaded =", isLoaded, "path =", location.pathname);
+    
+    const syncToken = async () => {
+      if (isSignedIn) {
+        try {
+          const token = await getClerkToken();
+          if (token) {
+            await setSupabaseToken(token);
+            console.log("AuthSync: Token do Supabase configurado com sucesso");
+          } else {
+            console.error("AuthSync: Não foi possível obter o token do Clerk");
+          }
+        } catch (error) {
+          console.error("AuthSync: Erro ao sincronizar token", error);
+        }
+      }
+    };
+    
+    // Sincronizar token quando o usuário estiver autenticado
+    if (isLoaded && isSignedIn) {
+      syncToken();
+    }
     
     // Não redirecionar na página inicial ou em páginas de autenticação
     const publicPaths = ['/', '/login', '/register'];
