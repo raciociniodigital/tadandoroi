@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { RequireAuth } from "@/components/auth/ClerkAuth";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -25,11 +26,14 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/daily" element={<DailyTracking />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/records" element={<Records />} />
-          <Route path="/profile" element={<Profile />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          
+          {/* Protected routes */}
+          <Route path="/daily" element={<RequireAuth><DailyTracking /></RequireAuth>} />
+          <Route path="/analytics" element={<RequireAuth><Analytics /></RequireAuth>} />
+          <Route path="/records" element={<RequireAuth><Records /></RequireAuth>} />
+          <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+          
+          {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

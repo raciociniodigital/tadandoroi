@@ -1,5 +1,5 @@
 
-import { LoginForm } from '@/components/auth/AuthForms';
+import { ClerkLoginForm } from '@/components/auth/ClerkAuth';
 
 const Login = () => {
   return (
@@ -13,7 +13,7 @@ const Login = () => {
         </p>
       </div>
       
-      <LoginForm />
+      <ClerkLoginForm />
     </div>
   );
 };
