@@ -42,79 +42,79 @@ const Register = () => {
               socialButtonsBlockButton: "border border-border",
               socialButtonsBlockButtonGoogle: "bg-white hover:bg-gray-50",
               socialButtonsBlockButtonText: "text-foreground"
+            }
+          }}
+          text={{
+            signUp: {
+              start: {
+                title: "Criar conta",
+                subtitle: "para começar a usar o TrafficTracker",
+                actionText: "Já tem uma conta?",
+                actionLink: "Entrar"
+              },
+              emailLink: {
+                title: "Verifique seu email",
+                subtitle: "para continuar no TrafficTracker",
+                formTitle: "Link de verificação",
+                formSubtitle: "Enviamos um link de verificação para seu email",
+                resendButton: "Reenviar link",
+                unusedText: "Voltar para",
+                unusedTextLink: "cadastro"
+              },
+              emailCode: {
+                title: "Verifique seu email",
+                subtitle: "para continuar no TrafficTracker",
+                formTitle: "Código de verificação",
+                formSubtitle: "Enviamos um código de verificação para seu email",
+                resendButton: "Reenviar código"
+              },
+              phoneCode: {
+                title: "Verifique seu telefone",
+                subtitle: "para continuar no TrafficTracker",
+                formTitle: "Código de verificação",
+                formSubtitle: "Enviamos um código de verificação para seu telefone",
+                resendButton: "Reenviar código"
+              },
+              continue: {
+                title: "Complete seu perfil",
+                subtitle: "para continuar no TrafficTracker"
+              }
             },
-            text: {
-              signUp: {
-                start: {
-                  title: "Criar conta",
-                  subtitle: "para começar a usar o TrafficTracker",
-                  actionText: "Já tem uma conta?",
-                  actionLink: "Entrar"
-                },
-                emailLink: {
-                  title: "Verifique seu email",
-                  subtitle: "para continuar no TrafficTracker",
-                  formTitle: "Link de verificação",
-                  formSubtitle: "Enviamos um link de verificação para seu email",
-                  resendButton: "Reenviar link",
-                  unusedText: "Voltar para",
-                  unusedTextLink: "cadastro"
-                },
-                emailCode: {
-                  title: "Verifique seu email",
-                  subtitle: "para continuar no TrafficTracker",
-                  formTitle: "Código de verificação",
-                  formSubtitle: "Enviamos um código de verificação para seu email",
-                  resendButton: "Reenviar código"
-                },
-                phoneCode: {
-                  title: "Verifique seu telefone",
-                  subtitle: "para continuar no TrafficTracker",
-                  formTitle: "Código de verificação",
-                  formSubtitle: "Enviamos um código de verificação para seu telefone",
-                  resendButton: "Reenviar código"
-                },
-                continue: {
-                  title: "Complete seu perfil",
-                  subtitle: "para continuar no TrafficTracker"
-                }
-              },
-              socialButtons: {
-                dividerText: "ou",
-                googleButton: "Continuar com Google",
-                facebookButton: "Continuar com Facebook",
-                appleButton: "Continuar com Apple",
-                githubButton: "Continuar com GitHub",
-                discordButton: "Continuar com Discord"
-              },
-              formFieldLabel: {
-                email: "Email",
-                password: "Senha",
-                firstName: "Nome",
-                lastName: "Sobrenome",
-                phoneNumber: "Número de telefone",
-                emailAddress: "Endereço de email",
-                username: "Nome de usuário",
-                emailCode: "Código de verificação",
-                phoneCode: "Código de verificação"
-              },
-              formButtonPrimary: {
-                signIn: "Entrar",
-                continue: "Continuar",
-                signUp: "Cadastrar",
-                resetPassword: "Redefinir senha"
-              },
-              footerActionLink: {
-                backToSignIn: "Voltar para entrar"
-              },
-              userProfile: {
-                title: "Perfil"
-              },
-              userButton: {
-                action: {
-                  signOut: "Sair",
-                  manageAccount: "Gerenciar conta"
-                }
+            socialButtons: {
+              dividerText: "ou",
+              googleButton: "Continuar com Google",
+              facebookButton: "Continuar com Facebook",
+              appleButton: "Continuar com Apple",
+              githubButton: "Continuar com GitHub",
+              discordButton: "Continuar com Discord"
+            },
+            formFieldLabel: {
+              email: "Email",
+              password: "Senha",
+              firstName: "Nome",
+              lastName: "Sobrenome",
+              phoneNumber: "Número de telefone",
+              emailAddress: "Endereço de email",
+              username: "Nome de usuário",
+              emailCode: "Código de verificação",
+              phoneCode: "Código de verificação"
+            },
+            formButtonPrimary: {
+              signIn: "Entrar",
+              continue: "Continuar",
+              signUp: "Cadastrar",
+              resetPassword: "Redefinir senha"
+            },
+            footerActionLink: {
+              backToSignIn: "Voltar para entrar"
+            },
+            userProfile: {
+              title: "Perfil"
+            },
+            userButton: {
+              action: {
+                signOut: "Sair",
+                manageAccount: "Gerenciar conta"
               }
             }
           }}
