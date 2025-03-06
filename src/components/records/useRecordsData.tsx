@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { 
   format, 
@@ -12,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@clerk/clerk-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { getClerkToken, setSupabaseToken } from '@/utils/authUtils';
+import { useSupabaseAuth } from '@/providers/AuthProvider';
 
 interface DailyRecord {
   id?: string;
@@ -39,40 +40,17 @@ export const useRecordsData = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { userId, isSignedIn } = useAuth();
+  const { isSynced, syncSupabase } = useSupabaseAuth();
   
   useEffect(() => {
     const fetchRecords = async () => {
-      if (!isSignedIn || !userId) {
+      if (!isSignedIn || !userId || !isSynced) {
         setIsLoading(false);
         return;
       }
       
       setIsLoading(true);
       try {
-        const token = await getClerkToken();
-        if (!token) {
-          console.error('Não foi possível obter token de autenticação');
-          toast({
-            title: "Erro de autenticação",
-            description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-        
-        const success = await setSupabaseToken(token);
-        if (!success) {
-          console.error('Falha ao configurar token do Supabase');
-          toast({
-            title: "Erro de autenticação",
-            description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-        
         const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
         const lastDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
         const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
@@ -115,7 +93,7 @@ export const useRecordsData = () => {
     };
 
     fetchRecords();
-  }, [currentMonth, userId, isSignedIn, toast]);
+  }, [currentMonth, userId, isSignedIn, isSynced, toast]);
   
   const goToPreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
@@ -209,14 +187,12 @@ export const useRecordsData = () => {
     const dateStr = format(dateToEdit, 'yyyy-MM-dd');
     
     try {
-      const token = await getClerkToken();
-      if (!token) {
-        throw new Error('Não foi possível obter token de autenticação');
-      }
-      
-      const success = await setSupabaseToken(token);
-      if (!success) {
-        throw new Error('Falha ao configurar token do Supabase');
+      // Ensure Supabase auth is synced
+      if (!isSynced) {
+        const syncSuccess = await syncSupabase();
+        if (!syncSuccess) {
+          throw new Error('Falha ao autenticar com o Supabase');
+        }
       }
       
       console.log('Atualizando dados para', dateStr, 'com o usuário', userId);

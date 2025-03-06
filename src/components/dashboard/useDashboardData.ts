@@ -4,7 +4,7 @@ import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
-import { getClerkToken, setSupabaseToken } from '@/utils/authUtils';
+import { useSupabaseAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 
 export const useDashboardData = () => {
@@ -17,42 +17,17 @@ export const useDashboardData = () => {
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { userId, isSignedIn } = useAuth();
+  const { isSynced } = useSupabaseAuth();
   const { toast } = useToast();
 
   const fetchDataFromSupabase = useCallback(async () => {
-    if (!isSignedIn || !userId) {
+    if (!isSignedIn || !userId || !isSynced) {
       setIsLoading(false);
       return [];
     }
 
     try {
       setIsLoading(true);
-      
-      // Ensure we have a valid Supabase auth token
-      const token = await getClerkToken();
-      if (!token) {
-        console.error('Não foi possível obter token de autenticação');
-        toast({
-          title: "Erro de autenticação",
-          description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return [];
-      }
-      
-      // Configurar sessão do Supabase com o token antes de fazer a consulta
-      const success = await setSupabaseToken(token);
-      if (!success) {
-        console.error('Falha ao configurar token do Supabase');
-        toast({
-          title: "Erro de autenticação",
-          description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return [];
-      }
       
       let startDate;
       let endDate = endOfDay(today);
@@ -130,7 +105,7 @@ export const useDashboardData = () => {
       setIsLoading(false);
       return [];
     }
-  }, [selectedPeriod, dateRange, today, userId, isSignedIn, toast]);
+  }, [selectedPeriod, dateRange, today, userId, isSignedIn, isSynced, toast]);
 
   useEffect(() => {
     fetchDataFromSupabase();

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -11,7 +12,7 @@ import MetricsDisplay from './MetricsDisplay';
 import { useTrackingCalculations } from './useTrackingCalculations';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
-import { syncSupabaseAuth, getClerkToken, setSupabaseToken } from '@/utils/authUtils';
+import { useSupabaseAuth } from '@/providers/AuthProvider';
 
 interface TrackingData {
   investment: number;
@@ -27,9 +28,9 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [authError, setAuthError] = useState(false);
   const { toast } = useToast();
   const { userId, isSignedIn } = useAuth();
+  const { isSynced, syncSupabase } = useSupabaseAuth();
   
   const {
     investment,
@@ -47,84 +48,12 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
   } = useTrackingCalculations();
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const setupAuth = async () => {
-      if (!isSignedIn || !userId) {
-        if (isMounted) {
-          setIsLoading(false);
-          setAuthError(false);
-        }
-        return;
-      }
-      
-      try {
-        const success = await syncSupabaseAuth();
-        
-        if (!success && isMounted) {
-          console.error('Erro ao sincronizar autenticação com Supabase');
-          setAuthError(true);
-          
-          setTimeout(async () => {
-            if (!isMounted) return;
-            
-            const retrySuccess = await syncSupabaseAuth();
-            if (retrySuccess) {
-              console.log('Autenticação sincronizada com sucesso após retry');
-              setAuthError(false);
-              await fetchDailyRecord();
-            } else {
-              setTimeout(async () => {
-                if (!isMounted) return;
-                
-                const thirdRetrySuccess = await syncSupabaseAuth();
-                if (thirdRetrySuccess) {
-                  console.log('Autenticação sincronizada com sucesso após terceira tentativa');
-                  setAuthError(false);
-                  await fetchDailyRecord();
-                } else {
-                  console.error('Falha na autenticação mesmo após múltiplas tentativas');
-                  setAuthError(true);
-                  setIsLoading(false);
-                  
-                  toast({
-                    title: "Erro de autenticação",
-                    description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
-                    variant: "destructive",
-                  });
-                }
-              }, 2000);
-            }
-          }, 1500);
-          
-          return;
-        }
-        
-        if (isMounted) {
-          setAuthError(false);
-          await fetchDailyRecord();
-        }
-      } catch (error) {
-        console.error('Erro ao configurar autenticação:', error);
-        if (isMounted) {
-          setAuthError(true);
-          setIsLoading(false);
-          
-          toast({
-            title: "Erro de autenticação",
-            description: "Ocorreu um erro ao autenticar com o Supabase.",
-            variant: "destructive",
-          });
-        }
-      }
-    };
-    
-    setupAuth();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [isSignedIn, userId]);
+    if (isSignedIn && isSynced) {
+      fetchDailyRecord();
+    } else {
+      setIsLoading(false);
+    }
+  }, [date, isSignedIn, isSynced]);
 
   const fetchDailyRecord = async () => {
     if (!isSignedIn || !userId) {
@@ -178,12 +107,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     }
   };
 
-  useEffect(() => {
-    if (!authError && isSignedIn) {
-      fetchDailyRecord();
-    }
-  }, [date, authError, isSignedIn]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -199,15 +122,9 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     setIsSubmitting(true);
 
     try {
-      const token = await getClerkToken();
-      if (!token) {
-        throw new Error('Falha ao obter token de autenticação');
-      }
-      
-      const authSynced = await setSupabaseToken(token);
-      
-      if (!authSynced) {
-        const syncSuccess = await syncSupabaseAuth();
+      // Make sure Supabase auth is synced before submitting
+      if (!isSynced) {
+        const syncSuccess = await syncSupabase();
         if (!syncSuccess) {
           throw new Error('Falha ao autenticar com o Supabase');
         }
@@ -278,7 +195,7 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {authError ? (
+        {!isSynced ? (
           <div className="flex flex-col items-center justify-center py-6 gap-4">
             <div className="text-destructive font-medium">Erro de autenticação</div>
             <p className="text-muted-foreground text-center">
@@ -288,9 +205,8 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
               variant="outline" 
               onClick={async () => {
                 try {
-                  const success = await syncSupabaseAuth();
+                  const success = await syncSupabase();
                   if (success) {
-                    setAuthError(false);
                     toast({
                       title: "Autenticação recuperada",
                       description: "A autenticação foi restaurada com sucesso.",
@@ -348,7 +264,7 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
           type="submit" 
           onClick={handleSubmit}
           className="w-full"
-          disabled={isSubmitting || isLoading || !isSignedIn || authError}
+          disabled={isSubmitting || isLoading || !isSignedIn || !isSynced}
         >
           {isSubmitting ? (
             <>
