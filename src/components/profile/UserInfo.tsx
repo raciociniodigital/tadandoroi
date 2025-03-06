@@ -2,19 +2,20 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth as useClerkAuth, useUser } from '@clerk/clerk-react';
 import { User as SupabaseUser, getCurrentUser } from '@/lib/users';
 import { useAuth as useCustomAuth } from '@/hooks/useAuth';
 
 export const UserInfo = () => {
-  const { user, isLoaded } = useAuth();
+  const { isLoaded: clerkLoaded, userId } = useClerkAuth();
+  const { user } = useUser();
   const { supabaseReady } = useCustomAuth();
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
-      if (isLoaded && supabaseReady) {
+      if (clerkLoaded && supabaseReady) {
         try {
           const userData = await getCurrentUser();
           setSupabaseUser(userData);
@@ -27,9 +28,9 @@ export const UserInfo = () => {
     };
 
     fetchUser();
-  }, [isLoaded, supabaseReady]);
+  }, [clerkLoaded, supabaseReady]);
 
-  if (!isLoaded || loading) {
+  if (!clerkLoaded || loading) {
     return (
       <Card>
         <CardHeader>
@@ -61,7 +62,7 @@ export const UserInfo = () => {
             <span className="font-medium">Email:</span> {user?.emailAddresses[0]?.emailAddress}
           </div>
           <div>
-            <span className="font-medium">ID do Clerk:</span> {user?.id}
+            <span className="font-medium">ID do Clerk:</span> {userId}
           </div>
           {supabaseUser && (
             <div>
