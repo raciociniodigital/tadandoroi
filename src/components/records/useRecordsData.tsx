@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   format, 
@@ -9,7 +8,7 @@ import {
   getMonth, 
   getYear
 } from 'date-fns';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@clerk/clerk-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -41,7 +40,6 @@ export const useRecordsData = () => {
   const navigate = useNavigate();
   const { userId, isSignedIn } = useAuth();
   
-  // Fetch records from Supabase when the month changes or user signs in
   useEffect(() => {
     const fetchRecords = async () => {
       if (!isSignedIn || !userId) {
@@ -51,7 +49,6 @@ export const useRecordsData = () => {
       
       setIsLoading(true);
       try {
-        // Ensure we have a valid Supabase auth token
         const token = await getClerkToken();
         if (!token) {
           console.error('Não foi possível obter token de autenticação');
@@ -64,7 +61,6 @@ export const useRecordsData = () => {
           return;
         }
         
-        // Configurar sessão do Supabase com o token antes de fazer a consulta
         const success = await setSupabaseToken(token);
         if (!success) {
           console.error('Falha ao configurar token do Supabase');
@@ -213,13 +209,11 @@ export const useRecordsData = () => {
     const dateStr = format(dateToEdit, 'yyyy-MM-dd');
     
     try {
-      // Ensure we have a valid Supabase auth token
       const token = await getClerkToken();
       if (!token) {
         throw new Error('Não foi possível obter token de autenticação');
       }
       
-      // Configurar sessão do Supabase com o token antes de fazer a inserção
       const success = await setSupabaseToken(token);
       if (!success) {
         throw new Error('Falha ao configurar token do Supabase');
@@ -227,7 +221,6 @@ export const useRecordsData = () => {
       
       console.log('Atualizando dados para', dateStr, 'com o usuário', userId);
       
-      // Prepare data for Supabase
       const recordData = {
         user_id: userId,
         date: dateStr,
@@ -239,7 +232,6 @@ export const useRecordsData = () => {
       
       console.log('Dados a serem salvos:', recordData);
       
-      // Upsert to Supabase
       const { error } = await supabase
         .from('daily_records')
         .upsert(recordData, {
@@ -251,7 +243,6 @@ export const useRecordsData = () => {
         throw error;
       }
       
-      // Refresh the records
       const { data: newRecord, error: fetchError } = await supabase
         .from('daily_records')
         .select('*')
@@ -264,7 +255,6 @@ export const useRecordsData = () => {
       } else {
         console.log('Registro atualizado:', newRecord);
         
-        // Update local state
         const updatedRecords = [...records];
         const existingIndex = updatedRecords.findIndex(r => 
           r.date.getDate() === editingDay && 
@@ -321,7 +311,6 @@ export const useRecordsData = () => {
     const month = currentMonth.getMonth();
     const selectedDate = new Date(year, month, day);
     
-    // Navigate to daily page with the selected date
     navigate('/daily');
   };
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,7 +11,7 @@ import MetricsDisplay from './MetricsDisplay';
 import { useTrackingCalculations } from './useTrackingCalculations';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
-import { syncSupabaseAuth } from '@/utils/supabaseAuth';
+import { syncSupabaseAuth, getClerkToken, setSupabaseToken } from '@/utils/supabaseAuth';
 
 interface TrackingData {
   investment: number;
@@ -47,7 +46,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     roas
   } = useTrackingCalculations();
 
-  // Sincroniza a autenticação quando o componente é montado
   useEffect(() => {
     let isMounted = true;
     
@@ -67,7 +65,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
           console.error('Erro ao sincronizar autenticação com Supabase');
           setAuthError(true);
           
-          // Tenta mais uma vez após curto atraso
           setTimeout(async () => {
             if (!isMounted) return;
             
@@ -75,25 +72,34 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
             if (retrySuccess) {
               console.log('Autenticação sincronizada com sucesso após retry');
               setAuthError(false);
-              // Agora podemos buscar os dados
               await fetchDailyRecord();
             } else {
-              console.error('Falha na autenticação mesmo após retry');
-              setAuthError(true);
-              setIsLoading(false);
-              
-              toast({
-                title: "Erro de autenticação",
-                description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
-                variant: "destructive",
-              });
+              setTimeout(async () => {
+                if (!isMounted) return;
+                
+                const thirdRetrySuccess = await syncSupabaseAuth();
+                if (thirdRetrySuccess) {
+                  console.log('Autenticação sincronizada com sucesso após terceira tentativa');
+                  setAuthError(false);
+                  await fetchDailyRecord();
+                } else {
+                  console.error('Falha na autenticação mesmo após múltiplas tentativas');
+                  setAuthError(true);
+                  setIsLoading(false);
+                  
+                  toast({
+                    title: "Erro de autenticação",
+                    description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
+                    variant: "destructive",
+                  });
+                }
+              }, 2000);
             }
           }, 1500);
           
           return;
         }
         
-        // Autenticação OK, busca os dados
         if (isMounted) {
           setAuthError(false);
           await fetchDailyRecord();
@@ -120,7 +126,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     };
   }, [isSignedIn, userId]);
 
-  // Função para buscar os dados do registro diário
   const fetchDailyRecord = async () => {
     if (!isSignedIn || !userId) {
       setIsLoading(false);
@@ -157,7 +162,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         setSales(record.sales.toString());
         setRevenue(record.revenue.toString());
       } else {
-        // Limpa o formulário se não existirem dados para este dia
         setInvestment('');
         setSales('');
         setRevenue('');
@@ -174,7 +178,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     }
   };
 
-  // Atualiza os dados quando a data muda
   useEffect(() => {
     if (!authError && isSignedIn) {
       fetchDailyRecord();
@@ -196,24 +199,28 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     setIsSubmitting(true);
 
     try {
-      // Certifica-se de ter uma autenticação válida do Supabase
-      const authSynced = await syncSupabaseAuth();
-      
-      if (!authSynced) {
-        throw new Error('Falha ao autenticar com o Supabase');
+      const token = await getClerkToken();
+      if (!token) {
+        throw new Error('Falha ao obter token de autenticação');
       }
       
-      // Converte dados do formulário
+      const authSynced = await setSupabaseToken(token);
+      
+      if (!authSynced) {
+        const syncSuccess = await syncSupabaseAuth();
+        if (!syncSuccess) {
+          throw new Error('Falha ao autenticar com o Supabase');
+        }
+      }
+      
       const data: TrackingData = {
         investment: investmentValue,
         sales: salesValue,
         revenue: revenueValue,
       };
 
-      // Formata a data como string para o Supabase
       const dateStr = format(date, 'yyyy-MM-dd');
 
-      // Log para depuração
       console.log('Salvando dados:', {
         user_id: userId,
         date: dateStr,
@@ -222,7 +229,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         revenue: data.revenue
       });
       
-      // Importante: garantir que estamos usando userId como string
       const { error } = await supabase
         .from('daily_records')
         .upsert({

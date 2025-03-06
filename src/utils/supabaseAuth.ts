@@ -64,6 +64,44 @@ export const getAuthUserId = (): string | null => {
 };
 
 /**
+ * Obtém o token JWT do Clerk para Supabase
+ */
+export const getClerkToken = async (): Promise<string | null> => {
+  try {
+    if (typeof window === 'undefined' || !window.Clerk || !window.Clerk.session) {
+      return null;
+    }
+    
+    return await window.Clerk.session.getToken({ template: 'supabase' });
+  } catch (error) {
+    console.error('Erro ao obter token do Clerk:', error);
+    return null;
+  }
+};
+
+/**
+ * Define o token JWT do Supabase
+ */
+export const setSupabaseToken = async (token: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase.auth.setSession({
+      access_token: token,
+      refresh_token: '',
+    });
+    
+    if (error) {
+      console.error('Erro ao definir a sessão do Supabase:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao definir token do Supabase:', error);
+    return false;
+  }
+};
+
+/**
  * Hook personalizado para obter o token JWT para Supabase
  * Não use diretamente - Use syncSupabaseAuth em vez disso
  */

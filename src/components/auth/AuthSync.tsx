@@ -16,6 +16,7 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
   const { toast } = useToast();
   const location = useLocation();
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Lista de caminhos públicos (não requerem autenticação)
   const publicPaths = ['/', '/login', '/register'];
@@ -49,18 +50,50 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
           if (!success && !isPublicPath) {
             console.warn('Não foi possível sincronizar com Supabase. Tentando novamente...');
             
+            // Incrementa contador de tentativas
+            if (isMounted) {
+              setRetryCount(prev => prev + 1);
+            }
+            
+            // Se já tentou muitas vezes, desiste
+            if (retryCount > 5) {
+              console.error('Muitas tentativas de sincronização falharam');
+              if (isMounted) {
+                setIsAuthChecking(false);
+              }
+              
+              if (!isPublicPath) {
+                toast({
+                  title: "Problemas de autenticação",
+                  description: "Tente fazer logout e login novamente",
+                  variant: "destructive",
+                });
+              }
+              return;
+            }
+            
             // Tenta mais uma vez após um curto atraso
             setTimeout(async () => {
               if (!isMounted) return;
               
               const retrySuccess = await syncSupabaseAuth();
               if (!retrySuccess && !isPublicPath) {
-                toast({
-                  title: "Erro de autenticação",
-                  description: "Problema na autenticação com Supabase. Tente fazer login novamente.",
-                  variant: "destructive",
-                });
-                navigate('/login');
+                // Uma última tentativa
+                setTimeout(async () => {
+                  if (!isMounted) return;
+                  
+                  const lastTrySuccess = await syncSupabaseAuth();
+                  if (!lastTrySuccess && !isPublicPath) {
+                    toast({
+                      title: "Erro de autenticação",
+                      description: "Problema na autenticação com Supabase. Tente fazer login novamente.",
+                      variant: "destructive",
+                    });
+                  }
+                  
+                  if (isMounted) setIsAuthChecking(false);
+                }, 2000);
+                return;
               }
               
               if (isMounted) setIsAuthChecking(false);
@@ -81,7 +114,7 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
     return () => {
       isMounted = false;
     };
-  }, [isSignedIn, isLoaded, navigate, toast, location.pathname, isPublicPath]);
+  }, [isSignedIn, isLoaded, navigate, toast, location.pathname, isPublicPath, retryCount]);
 
   // Mostra um indicador de carregamento enquanto verifica autenticação
   if (isAuthChecking && !isPublicPath) {

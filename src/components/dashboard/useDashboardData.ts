@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
