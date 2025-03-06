@@ -12,6 +12,7 @@ import MetricsDisplay from './MetricsDisplay';
 import { useTrackingCalculations } from './useTrackingCalculations';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
+import { getClerkToken } from '@/utils/supabaseAuth';
 
 interface TrackingData {
   investment: number;
@@ -58,7 +59,20 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         const dateStr = format(date, 'yyyy-MM-dd');
         console.log('Buscando dados para a data:', dateStr, 'com userId:', userId);
         
-        const { data, error } = await supabase
+        // Ensure we have a valid Supabase auth token
+        const token = await getClerkToken();
+        if (!token) {
+          console.error('No authentication token available');
+          toast({
+            title: "Erro de autenticação",
+            description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        const { data: record, error } = await supabase
           .from('daily_records')
           .select('*')
           .eq('user_id', userId)
@@ -75,12 +89,12 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
           return;
         }
         
-        console.log('Dados encontrados:', data);
+        console.log('Dados encontrados:', record);
         
-        if (data) {
-          setInvestment(data.investment.toString());
-          setSales(data.sales.toString());
-          setRevenue(data.revenue.toString());
+        if (record) {
+          setInvestment(record.investment.toString());
+          setSales(record.sales.toString());
+          setRevenue(record.revenue.toString());
         } else {
           // Clear form if no data exists for this day
           setInvestment('');
@@ -112,6 +126,12 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     setIsSubmitting(true);
 
     try {
+      // Ensure we have a valid Supabase auth token
+      const token = await getClerkToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+      
       // Convert form data
       const data: TrackingData = {
         investment: investmentValue,

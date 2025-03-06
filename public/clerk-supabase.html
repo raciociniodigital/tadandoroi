@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clerk Supabase JWT Template</title>
+  <script>
+    // This script is to enable Clerk to generate JWTs compatible with Supabase
+    window.addEventListener('load', function() {
+      if (window.Clerk) {
+        window.Clerk.addListener(({ user }) => {
+          // Set up JWT template for Supabase
+          window.Clerk.session?.getToken({ template: 'supabase' });
+        });
+      }
+    });
+  </script>
+</head>
+<body>
+  <!-- This page is just a helper for Clerk-Supabase integration -->
+</body>
+</html>

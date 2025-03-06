@@ -1,9 +1,11 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { format, subDays, startOfDay, endOfDay, differenceInDays, parseISO } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
+import { getClerkToken } from '@/utils/supabaseAuth';
+import { useToast } from '@/hooks/use-toast';
 
 export const useDashboardData = () => {
   const today = new Date();
@@ -15,6 +17,7 @@ export const useDashboardData = () => {
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { userId, isSignedIn } = useAuth();
+  const { toast } = useToast();
 
   const fetchDataFromSupabase = useCallback(async () => {
     if (!isSignedIn || !userId) {
@@ -24,6 +27,20 @@ export const useDashboardData = () => {
 
     try {
       setIsLoading(true);
+      
+      // Ensure we have a valid Supabase auth token
+      const token = await getClerkToken();
+      if (!token) {
+        console.error('No authentication token available');
+        toast({
+          title: "Erro de autenticação",
+          description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return [];
+      }
+      
       let startDate;
       let endDate = endOfDay(today);
       
@@ -49,6 +66,8 @@ export const useDashboardData = () => {
       const startDateStr = format(startDate, 'yyyy-MM-dd');
       const endDateStr = format(endDate, 'yyyy-MM-dd');
       
+      console.log('Buscando dados do dashboard de', startDateStr, 'até', endDateStr, 'para o usuário', userId);
+      
       const { data: records, error } = await supabase
         .from('daily_records')
         .select('*')
@@ -59,9 +78,16 @@ export const useDashboardData = () => {
       
       if (error) {
         console.error('Erro ao buscar dados do dashboard:', error);
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível buscar os dados para o dashboard.",
+          variant: "destructive",
+        });
         setIsLoading(false);
         return [];
       }
+      
+      console.log('Registros encontrados para o dashboard:', records);
       
       // Transform Supabase data to match the expected format
       const formattedData = records.map((record: any) => {
@@ -91,7 +117,7 @@ export const useDashboardData = () => {
       setIsLoading(false);
       return [];
     }
-  }, [selectedPeriod, dateRange, today, userId, isSignedIn]);
+  }, [selectedPeriod, dateRange, today, userId, isSignedIn, toast]);
 
   useEffect(() => {
     fetchDataFromSupabase();

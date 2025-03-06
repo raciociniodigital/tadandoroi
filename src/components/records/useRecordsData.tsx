@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@clerk/clerk-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { getClerkToken } from '@/utils/supabaseAuth';
 
 interface DailyRecord {
   id?: string;
@@ -50,6 +51,19 @@ export const useRecordsData = () => {
       
       setIsLoading(true);
       try {
+        // Ensure we have a valid Supabase auth token
+        const token = await getClerkToken();
+        if (!token) {
+          console.error('No authentication token available');
+          toast({
+            title: "Erro de autenticação",
+            description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
         const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
         const lastDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
         const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
@@ -186,6 +200,12 @@ export const useRecordsData = () => {
     const dateStr = format(dateToEdit, 'yyyy-MM-dd');
     
     try {
+      // Ensure we have a valid Supabase auth token
+      const token = await getClerkToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+      
       console.log('Atualizando dados para', dateStr, 'com o usuário', userId);
       
       // Prepare data for Supabase

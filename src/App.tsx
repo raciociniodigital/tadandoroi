@@ -14,6 +14,7 @@ import Records from "./pages/Records";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import AuthSync from "./components/auth/AuthSync";
+import ClerkSupabaseAuth from "./components/auth/ClerkSupabaseAuth";
 
 const queryClient = new QueryClient();
 
@@ -38,53 +39,55 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthSync>
-          <Routes>
-            {/* Rotas públicas */}
-            <Route path="/" element={<Index />} />
-            
-            {/* Auth routes */}
-            <Route path="/login" element={
-              <>
-                <SignedIn><Navigate to="/daily" replace /></SignedIn>
-                <SignedOut><Login /></SignedOut>
-              </>
-            } />
-            
-            <Route path="/register" element={
-              <>
-                <SignedIn><Navigate to="/daily" replace /></SignedIn>
-                <SignedOut><Register /></SignedOut>
-              </>
-            } />
+          <ClerkSupabaseAuth>
+            <Routes>
+              {/* Rotas públicas */}
+              <Route path="/" element={<Index />} />
+              
+              {/* Auth routes */}
+              <Route path="/login" element={
+                <>
+                  <SignedIn><Navigate to="/daily" replace /></SignedIn>
+                  <SignedOut><Login /></SignedOut>
+                </>
+              } />
+              
+              <Route path="/register" element={
+                <>
+                  <SignedIn><Navigate to="/daily" replace /></SignedIn>
+                  <SignedOut><Register /></SignedOut>
+                </>
+              } />
 
-            {/* Rotas protegidas */}
-            <Route path="/daily" element={
-              <ProtectedRoute>
-                <DailyTracking />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/analytics" element={
-              <ProtectedRoute>
-                <Analytics />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/records" element={
-              <ProtectedRoute>
-                <Records />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
-            
-            {/* Rota para todas as outras páginas */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* Rotas protegidas */}
+              <Route path="/daily" element={
+                <ProtectedRoute>
+                  <DailyTracking />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/records" element={
+                <ProtectedRoute>
+                  <Records />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              
+              {/* Rota para todas as outras páginas */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ClerkSupabaseAuth>
         </AuthSync>
       </BrowserRouter>
     </TooltipProvider>
