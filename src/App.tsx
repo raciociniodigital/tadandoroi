@@ -4,7 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import AuthSync from "./components/auth/AuthSync";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -16,18 +17,6 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <>
-      <SignedIn>{children}</SignedIn>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-    </>
-  );
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -35,46 +24,46 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Public routes */}
+          {/* Rotas públicas */}
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected routes */}
+          {/* Rotas protegidas */}
           <Route 
             path="/daily" 
             element={
-              <ProtectedRoute>
+              <AuthSync>
                 <DailyTracking />
-              </ProtectedRoute>
+              </AuthSync>
             } 
           />
           <Route 
             path="/analytics" 
             element={
-              <ProtectedRoute>
+              <AuthSync>
                 <Analytics />
-              </ProtectedRoute>
+              </AuthSync>
             } 
           />
           <Route 
             path="/records" 
             element={
-              <ProtectedRoute>
+              <AuthSync>
                 <Records />
-              </ProtectedRoute>
+              </AuthSync>
             } 
           />
           <Route 
             path="/profile" 
             element={
-              <ProtectedRoute>
+              <AuthSync>
                 <Profile />
-              </ProtectedRoute>
+              </AuthSync>
             } 
           />
           
-          {/* Catch-all route */}
+          {/* Rota para todas as outras páginas */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
