@@ -18,8 +18,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { dailyRecords } from '@/components/daily-tracker/DailyTracker';
 import { useNavigate } from 'react-router-dom';
+import { getAllRecords, saveRecord, TrackingData } from '@/services/trackingService';
 
 interface DailyRecord {
   date: Date;
@@ -45,9 +45,14 @@ const RecordsTable = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
+    loadRecords();
+  }, [currentMonth]);
+  
+  const loadRecords = () => {
+    const storedRecords = getAllRecords();
     const loadedRecords: DailyRecord[] = [];
     
-    Object.entries(dailyRecords).forEach(([dateStr, data]) => {
+    Object.entries(storedRecords).forEach(([dateStr, data]) => {
       loadedRecords.push({
         date: parseISO(dateStr),
         investment: data.investment,
@@ -57,7 +62,7 @@ const RecordsTable = () => {
     });
     
     setRecords(loadedRecords);
-  }, [currentMonth, dailyRecords]);
+  };
   
   const goToPreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
@@ -139,43 +144,29 @@ const RecordsTable = () => {
     const dateToEdit = new Date(year, month, editingDay);
     const dateKey = format(dateToEdit, 'yyyy-MM-dd');
     
-    dailyRecords[dateKey] = {
-      investment: parseFloat(editData.investment) || 0,
-      sales: parseInt(editData.sales) || 0,
-      revenue: parseFloat(editData.revenue) || 0
-    };
-    
-    const updatedRecords = [...records];
-    const existingIndex = updatedRecords.findIndex(r => 
-      r.date.getDate() === editingDay && 
-      getMonth(r.date) === getMonth(currentMonth) && 
-      getYear(r.date) === getYear(currentMonth)
-    );
-    
-    if (existingIndex >= 0) {
-      updatedRecords[existingIndex] = {
-        date: dateToEdit,
-        investment: parseFloat(editData.investment) || 0,
-        sales: parseInt(editData.sales) || 0,
-        revenue: parseFloat(editData.revenue) || 0
-      };
-    } else {
-      updatedRecords.push({
-        date: dateToEdit,
+    try {
+      saveRecord(dateKey, {
         investment: parseFloat(editData.investment) || 0,
         sales: parseInt(editData.sales) || 0,
         revenue: parseFloat(editData.revenue) || 0
       });
+      
+      loadRecords();
+      
+      toast({
+        title: "Dados atualizados",
+        description: `Os dados do dia ${editingDay} foram atualizados com sucesso.`,
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar registro:", error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Ocorreu um erro ao atualizar os dados.",
+        variant: "destructive"
+      });
+    } finally {
+      setEditingDay(null);
     }
-    
-    setRecords(updatedRecords);
-    
-    toast({
-      title: "Dados atualizados",
-      description: `Os dados do dia ${editingDay} foram atualizados com sucesso.`,
-    });
-    
-    setEditingDay(null);
   };
 
   const handleCancel = () => {
