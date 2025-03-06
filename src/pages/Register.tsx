@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSupabaseAuth } from '@/providers/SupabaseAuthProvider';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from '@/hooks/use-toast';
 
@@ -47,7 +47,7 @@ export default function Register() {
         setRegistrationSuccess(true);
         toast({
           title: "Cadastro realizado com sucesso",
-          description: "Enviamos um email de confirmação. Por favor, verifique sua caixa de entrada e clique no link para ativar sua conta.",
+          description: "Enviamos um email de confirmação. Por favor, verifique sua caixa de entrada e spam.",
         });
       }
     } catch (error) {
@@ -74,11 +74,22 @@ export default function Register() {
         
         {registrationSuccess && (
           <div className="px-6">
-            <Alert className="mb-4 bg-green-50 border-green-200">
-              <AlertTitle className="text-green-800">Conta criada com sucesso!</AlertTitle>
-              <AlertDescription className="text-green-700">
-                Enviamos um email de confirmação para <strong>{email}</strong>. 
-                Por favor, verifique sua caixa de entrada e clique no link para ativar sua conta antes de fazer login.
+            <Alert className="mb-4 bg-blue-50 border-blue-200">
+              <Mail className="h-5 w-5 text-blue-600" />
+              <AlertTitle className="text-blue-800 font-medium">Verificação de Email Necessária</AlertTitle>
+              <AlertDescription className="text-blue-700">
+                <p className="mb-2">
+                  Enviamos um email de confirmação para <strong>{email}</strong>.
+                </p>
+                <p className="mb-2">
+                  Por favor, <strong>verifique sua caixa de entrada e pasta de spam</strong> e clique no link para ativar sua conta antes de fazer login.
+                </p>
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md flex items-start">
+                  <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-yellow-800">
+                    Se você não receber o email em alguns minutos, tente fazer login para reenviar o email de confirmação.
+                  </p>
+                </div>
               </AlertDescription>
             </Alert>
           </div>

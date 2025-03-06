@@ -16,6 +16,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
   const { signIn, session } = useSupabaseAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -27,7 +28,16 @@ export default function Login() {
   }
 
   const handleResendConfirmation = async () => {
-    setIsSubmitting(true);
+    if (!email) {
+      toast({
+        title: "Email necessário",
+        description: "Por favor, informe o email que você utilizou para se cadastrar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setResendingEmail(true);
     
     try {
       const { error } = await supabase.auth.resend({
@@ -36,6 +46,7 @@ export default function Login() {
       });
       
       if (error) {
+        console.error('Erro ao reenviar email:', error);
         toast({
           title: "Erro ao reenviar email",
           description: error.message,
@@ -43,8 +54,8 @@ export default function Login() {
         });
       } else {
         toast({
-          title: "Email de confirmação enviado",
-          description: "Verifique sua caixa de entrada e confirme seu email para fazer login.",
+          title: "Email de confirmação reenviado",
+          description: `Enviamos um novo email de confirmação para ${email}. Por favor, verifique sua caixa de entrada e spam.`,
         });
       }
     } catch (error) {
@@ -55,7 +66,7 @@ export default function Login() {
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setResendingEmail(false);
     }
   };
 
@@ -70,7 +81,9 @@ export default function Login() {
         console.error('Erro de login:', error.message);
         
         // Verifica se o erro é de email não confirmado
-        if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed')) {
+        if (error.message.includes('Email not confirmed') || 
+            error.message.includes('email_not_confirmed') || 
+            error.message.toLowerCase().includes('não confirmado')) {
           setEmailNotConfirmed(true);
         } else {
           toast({
@@ -108,16 +121,25 @@ export default function Login() {
         {emailNotConfirmed && (
           <div className="px-6">
             <Alert variant="destructive" className="mb-4">
-              <AlertTitle>Erro ao fazer login</AlertTitle>
-              <AlertDescription>
-                Email não confirmado. Por favor, verifique sua caixa de entrada e clique no link de confirmação.
+              <AlertTitle>Email não confirmado</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>
+                  Você precisa confirmar seu email antes de fazer login. Por favor, verifique sua caixa de entrada e spam.
+                </p>
                 <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-white underline ml-1"
+                  variant="outline" 
+                  className="mt-2 bg-white hover:bg-gray-100 border-red-300"
                   onClick={handleResendConfirmation}
-                  disabled={isSubmitting}
+                  disabled={resendingEmail}
                 >
-                  Reenviar email de confirmação
+                  {resendingEmail ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Reenviando...
+                    </>
+                  ) : (
+                    'Reenviar email de confirmação'
+                  )}
                 </Button>
               </AlertDescription>
             </Alert>
