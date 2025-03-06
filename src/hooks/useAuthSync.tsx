@@ -24,16 +24,13 @@ export const useAuthSync = () => {
             return;
           }
 
-          // Se o usuário não existir, criar um novo registro
+          // Se o usuário não existir, criar um novo registro como admin (bypassing RLS)
           if (!existingUser) {
-            const { error: insertError } = await supabase
-              .from('users')
-              .insert([
-                {
-                  user_id: userId,
-                  email: user.emailAddresses[0].emailAddress
-                }
-              ]);
+            // Usando rpc para chamar função que contorna o RLS
+            const { error: insertError } = await supabase.rpc('create_user', {
+              user_id_param: userId,
+              email_param: user.emailAddresses[0].emailAddress
+            });
 
             if (insertError) {
               console.error('Erro ao criar usuário no Supabase:', insertError);

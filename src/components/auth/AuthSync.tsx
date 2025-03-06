@@ -15,8 +15,8 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
   const { toast } = useToast();
   const location = useLocation();
   
-  // Use o hook de sincronização que criamos
-  useAuthSync();
+  // Use o hook de sincronização que melhoramos
+  const authSync = useAuthSync();
 
   useEffect(() => {
     console.log("AuthSync: isSignedIn =", isSignedIn, "isLoaded =", isLoaded, "path =", location.pathname);
