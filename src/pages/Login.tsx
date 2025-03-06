@@ -34,20 +34,24 @@ const Login = () => {
               rootBox: "w-full max-w-md mx-auto",
               card: "shadow-lg rounded-lg border border-border bg-card",
               headerTitle: "text-xl font-semibold text-foreground after:content-['Entrar'] after:block empty:hidden",
-              headerSubtitle: "text-muted-foreground after:content-['para continuar no TrafficTracker'] after:block empty:hidden",
-              formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
-              formFieldLabel: "text-foreground",
+              headerSubtitle: "text-muted-foreground after:content-['para_continuar_no_TrafficTracker'] after:block empty:hidden",
+              formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground after:content-['Entrar'] after:block empty:hidden",
+              formFieldLabel: "text-foreground after:content-['Email'] after:block empty:hidden",
+              formFieldLabelEmail: "text-foreground after:content-['Email'] after:block empty:hidden",
+              formFieldLabelPassword: "text-foreground after:content-['Senha'] after:block empty:hidden",
               formFieldInput: "bg-background border-border text-foreground",
-              footerActionLink: "text-primary hover:underline",
+              footerActionLink: "text-primary hover:underline after:content-['Cadastre-se'] after:block empty:hidden",
               socialButtonsBlockButton: "border border-border",
               socialButtonsBlockButtonText: "text-foreground",
               socialButtonsBlockButtonGoogle: "bg-white text-gray-900 hover:bg-gray-50",
-              formFieldAction__forgotPassword: "text-primary hover:underline after:content-['Esqueceu a senha?'] after:block empty:hidden",
-              footerAction: "after:content-['Não tem uma conta?'] after:inline-block after:mr-1 empty:hidden",
-              footerActionLink__signUp: "after:content-['Cadastre-se'] after:block empty:hidden",
+              footerAction: "after:content-['Não_tem_uma_conta?'] after:inline-block after:mr-1 empty:hidden",
               dividerText: "after:content-['ou'] after:block empty:hidden",
-              formButtonPrimary__signIn: "after:content-['Entrar'] after:block empty:hidden",
-              socialButtonsBlockButtonText__google: "after:content-['Continuar com Google'] after:block empty:hidden"
+              socialButtonsBlockButtonText__google: "after:content-['Continuar_com_Google'] after:block empty:hidden",
+              formFieldAction__forgotPassword: "text-primary hover:underline after:content-['Esqueceu_a_senha?'] after:block empty:hidden",
+              formFieldInputShowPasswordButton: "after:content-['Mostrar'] after:block empty:hidden",
+              formFieldInputHidePasswordButton: "after:content-['Ocultar'] after:block empty:hidden",
+              formFieldInputEmailAddressInput: "placeholder:text-muted-foreground/70 placeholder:after:content-['Digite_seu_email'] placeholder:after:block placeholder:empty:hidden",
+              formFieldInputPasswordInput: "placeholder:text-muted-foreground/70 placeholder:after:content-['Digite_sua_senha'] placeholder:after:block placeholder:empty:hidden"
             }
           }}
         />
