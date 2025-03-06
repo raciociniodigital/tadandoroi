@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart, Calendar, LineChart, Lock, TrendingUp } from 'lucide-react';
@@ -32,8 +31,8 @@ const Index = () => {
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/80 fixed top-0 w-full z-50">
         <div className="container mx-auto flex items-center justify-between p-4">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold tracking-tight text-gradient">
-              Traffic<span className="text-foreground">Tracker</span>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Tá Dando <span className="text-primary">ROI</span>
             </h1>
           </div>
           <div className="flex items-center space-x-4">
@@ -54,7 +53,7 @@ const Index = () => {
             Monitoramento Inteligente
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            Acompanhe seu <span className="text-gradient">investimento</span> em tráfego e <span className="text-gradient">maximize</span> seus resultados
+            Tá Dando <span className="text-primary">ROI</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Plataforma completa para monitorar, analisar e otimizar seus gastos com tráfego pago, ajudando a tomar decisões baseadas em dados.
