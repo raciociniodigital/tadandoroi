@@ -53,6 +53,7 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
       setIsLoading(true);
       try {
         const dateStr = format(date, 'yyyy-MM-dd');
+        console.log('Buscando dados para a data:', dateStr, 'com userId:', userId);
         
         const { data, error } = await supabase
           .from('daily_records')
@@ -70,6 +71,8 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
           });
           return;
         }
+        
+        console.log('Dados encontrados:', data);
         
         if (data) {
           setInvestment(data.investment.toString());
@@ -116,6 +119,14 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     const dateStr = format(date, 'yyyy-MM-dd');
 
     try {
+      console.log('Salvando dados:', {
+        user_id: userId,
+        date: dateStr,
+        investment: data.investment,
+        sales: data.sales,
+        revenue: data.revenue
+      });
+      
       // Upsert the record to Supabase
       const { error } = await supabase
         .from('daily_records')
@@ -131,6 +142,7 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         });
 
       if (error) {
+        console.error('Erro detalhado ao salvar:', error);
         throw error;
       }
       

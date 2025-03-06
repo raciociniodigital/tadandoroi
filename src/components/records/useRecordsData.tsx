@@ -51,6 +51,8 @@ export const useRecordsData = () => {
         const lastDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
         const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
         
+        console.log('Buscando registros de', startDate, 'até', endDate, 'para o usuário', userId);
+        
         const { data, error } = await supabase
           .from('daily_records')
           .select('*')
@@ -67,6 +69,8 @@ export const useRecordsData = () => {
           });
           return;
         }
+        
+        console.log('Registros encontrados:', data);
         
         const formattedRecords: DailyRecord[] = data.map((record: any) => ({
           id: record.id,
@@ -170,6 +174,8 @@ export const useRecordsData = () => {
     const dateStr = format(dateToEdit, 'yyyy-MM-dd');
     
     try {
+      console.log('Atualizando dados para', dateStr, 'com o usuário', userId);
+      
       // Prepare data for Supabase
       const recordData = {
         user_id: userId,
@@ -180,6 +186,8 @@ export const useRecordsData = () => {
         updated_at: new Date().toISOString()
       };
       
+      console.log('Dados a serem salvos:', recordData);
+      
       // Upsert to Supabase
       const { error } = await supabase
         .from('daily_records')
@@ -188,6 +196,7 @@ export const useRecordsData = () => {
         });
       
       if (error) {
+        console.error('Erro detalhado ao salvar:', error);
         throw error;
       }
       
@@ -202,6 +211,8 @@ export const useRecordsData = () => {
       if (fetchError) {
         console.error('Erro ao buscar registro atualizado:', fetchError);
       } else {
+        console.log('Registro atualizado:', newRecord);
+        
         // Update local state
         const updatedRecords = [...records];
         const existingIndex = updatedRecords.findIndex(r => 
