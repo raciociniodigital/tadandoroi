@@ -33,64 +33,20 @@ const Register = () => {
             elements: {
               rootBox: "w-full max-w-md mx-auto",
               card: "shadow-lg rounded-lg border border-border bg-card",
-              headerTitle: "text-xl font-semibold text-foreground",
-              headerSubtitle: "text-muted-foreground",
+              headerTitle: "text-xl font-semibold text-foreground after:content-['Criar uma conta'] after:block empty:hidden",
+              headerSubtitle: "text-muted-foreground after:content-['para usar o TrafficTracker'] after:block empty:hidden",
               formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
               formFieldLabel: "text-foreground",
               formFieldInput: "bg-background border-border text-foreground",
               footerActionLink: "text-primary hover:underline",
               socialButtonsBlockButton: "border border-border",
               socialButtonsBlockButtonText: "text-foreground",
-              socialButtonsBlockButtonGoogle: "bg-white text-gray-900 hover:bg-gray-50"
-            }
-          }}
-          localization={{
-            signUp: {
-              start: {
-                title: "Criar uma conta",
-                subtitle: "para usar o TrafficTracker",
-                actionText: "Já tem uma conta?",
-                actionLink: "Entrar"
-              },
-              emailLink: {
-                title: "Verifique seu email",
-                subtitle: "para continuar no TrafficTracker",
-                formTitle: "Link de verificação",
-                formSubtitle: "Um link de verificação foi enviado para seu email",
-                resendButton: "Reenviar link"
-              },
-              emailCode: {
-                title: "Verifique seu email",
-                subtitle: "para continuar no TrafficTracker",
-                formTitle: "Código de verificação",
-                formSubtitle: "Um código de verificação foi enviado para seu email",
-                resendButton: "Reenviar código"
-              },
-              phoneCode: {
-                title: "Verifique seu telefone",
-                subtitle: "para continuar no TrafficTracker",
-                formTitle: "Código de verificação",
-                formSubtitle: "Um código de verificação foi enviado para seu telefone",
-                resendButton: "Reenviar código"
-              },
-              continue: {
-                title: "Complete seu cadastro",
-                subtitle: "para usar o TrafficTracker"
-              },
-              password: {
-                title: "Crie uma senha",
-                subtitle: "para proteger sua conta",
-                formTitle: "Crie uma senha",
-                formSubtitle: "para proteger sua conta"
-              },
-              socialButtonsBlockButton: "Continuar com {{provider}}",
-              dividerText: "ou",
-              submitButton: {
-                label: "Cadastrar"
-              },
-              backButton: "Voltar",
-              footerActionLink: "Entrar",
-              footerActionText: "Já tem uma conta?"
+              socialButtonsBlockButtonGoogle: "bg-white text-gray-900 hover:bg-gray-50",
+              footerAction: "after:content-['Já tem uma conta?'] after:inline-block after:mr-1 empty:hidden",
+              footerActionLink__signIn: "after:content-['Entrar'] after:block empty:hidden",
+              dividerText: "after:content-['ou'] after:block empty:hidden",
+              formButtonPrimary__signUp: "after:content-['Cadastrar'] after:block empty:hidden",
+              socialButtonsBlockButtonText__google: "after:content-['Continuar com Google'] after:block empty:hidden"
             }
           }}
         />
