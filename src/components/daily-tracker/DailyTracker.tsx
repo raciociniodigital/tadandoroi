@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Save } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +28,7 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
   const { toast } = useToast();
   const { userId, isSignedIn } = useAuth();
   
@@ -45,70 +47,139 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     roas
   } = useTrackingCalculations();
 
-  // Fetch data for selected date when date changes or user signs in
+  // Sincroniza a autenticação quando o componente é montado
   useEffect(() => {
-    const fetchDailyRecord = async () => {
+    let isMounted = true;
+    
+    const setupAuth = async () => {
       if (!isSignedIn || !userId) {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          setAuthError(false);
+        }
         return;
       }
       
-      setIsLoading(true);
       try {
-        const dateStr = format(date, 'yyyy-MM-dd');
-        console.log('Buscando dados para a data:', dateStr, 'com userId:', userId);
+        const success = await syncSupabaseAuth();
         
-        // Make sure we're authenticated with Supabase
-        const authSynced = await syncSupabaseAuth();
-        if (!authSynced) {
-          console.error('Erro na autenticação com Supabase');
-          toast({
-            title: "Erro de autenticação",
-            description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
+        if (!success && isMounted) {
+          console.error('Erro ao sincronizar autenticação com Supabase');
+          setAuthError(true);
+          
+          // Tenta mais uma vez após curto atraso
+          setTimeout(async () => {
+            if (!isMounted) return;
+            
+            const retrySuccess = await syncSupabaseAuth();
+            if (retrySuccess) {
+              console.log('Autenticação sincronizada com sucesso após retry');
+              setAuthError(false);
+              // Agora podemos buscar os dados
+              await fetchDailyRecord();
+            } else {
+              console.error('Falha na autenticação mesmo após retry');
+              setAuthError(true);
+              setIsLoading(false);
+              
+              toast({
+                title: "Erro de autenticação",
+                description: "Não foi possível autenticar com o Supabase. Tente fazer login novamente.",
+                variant: "destructive",
+              });
+            }
+          }, 1500);
+          
           return;
         }
         
-        const { data: record, error } = await supabase
-          .from('daily_records')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('date', dateStr)
-          .maybeSingle();
-        
-        if (error) {
-          console.error('Erro ao buscar dados:', error);
-          toast({
-            title: "Erro ao carregar dados",
-            description: "Não foi possível buscar os dados para esta data.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        console.log('Dados encontrados:', record);
-        
-        if (record) {
-          setInvestment(record.investment.toString());
-          setSales(record.sales.toString());
-          setRevenue(record.revenue.toString());
-        } else {
-          // Clear form if no data exists for this day
-          setInvestment('');
-          setSales('');
-          setRevenue('');
+        // Autenticação OK, busca os dados
+        if (isMounted) {
+          setAuthError(false);
+          await fetchDailyRecord();
         }
       } catch (error) {
-        console.error('Erro ao buscar registro diário:', error);
-      } finally {
-        setIsLoading(false);
+        console.error('Erro ao configurar autenticação:', error);
+        if (isMounted) {
+          setAuthError(true);
+          setIsLoading(false);
+          
+          toast({
+            title: "Erro de autenticação",
+            description: "Ocorreu um erro ao autenticar com o Supabase.",
+            variant: "destructive",
+          });
+        }
       }
     };
+    
+    setupAuth();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [isSignedIn, userId]);
 
-    fetchDailyRecord();
-  }, [date, userId, isSignedIn, setInvestment, setSales, setRevenue, toast]);
+  // Função para buscar os dados do registro diário
+  const fetchDailyRecord = async () => {
+    if (!isSignedIn || !userId) {
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      console.log('Buscando dados para a data:', dateStr, 'com userId:', userId);
+      
+      const { data: record, error } = await supabase
+        .from('daily_records')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('date', dateStr)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Erro ao buscar dados:', error);
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível buscar os dados para esta data.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log('Dados encontrados:', record);
+      
+      if (record) {
+        setInvestment(record.investment.toString());
+        setSales(record.sales.toString());
+        setRevenue(record.revenue.toString());
+      } else {
+        // Limpa o formulário se não existirem dados para este dia
+        setInvestment('');
+        setSales('');
+        setRevenue('');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar registro diário:', error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Ocorreu um erro ao buscar os dados.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Atualiza os dados quando a data muda
+  useEffect(() => {
+    if (!authError && isSignedIn) {
+      fetchDailyRecord();
+    }
+  }, [date, authError, isSignedIn]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,24 +196,24 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     setIsSubmitting(true);
 
     try {
-      // Ensure we have a valid Supabase authentication
+      // Certifica-se de ter uma autenticação válida do Supabase
       const authSynced = await syncSupabaseAuth();
       
       if (!authSynced) {
         throw new Error('Falha ao autenticar com o Supabase');
       }
       
-      // Convert form data
+      // Converte dados do formulário
       const data: TrackingData = {
         investment: investmentValue,
         sales: salesValue,
         revenue: revenueValue,
       };
 
-      // Format date as string for Supabase
+      // Formata a data como string para o Supabase
       const dateStr = format(date, 'yyyy-MM-dd');
 
-      // Logging for debugging
+      // Log para depuração
       console.log('Salvando dados:', {
         user_id: userId,
         date: dateStr,
@@ -151,7 +222,7 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         revenue: data.revenue
       });
       
-      // Important: Make sure we're using the userId as a string here
+      // Importante: garantir que estamos usando userId como string
       const { error } = await supabase
         .from('daily_records')
         .upsert({
@@ -201,42 +272,89 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <DatePicker date={date} setDate={setDate} />
+        {authError ? (
+          <div className="flex flex-col items-center justify-center py-6 gap-4">
+            <div className="text-destructive font-medium">Erro de autenticação</div>
+            <p className="text-muted-foreground text-center">
+              Não foi possível autenticar com o Supabase. Tente fazer logout e login novamente.
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                try {
+                  const success = await syncSupabaseAuth();
+                  if (success) {
+                    setAuthError(false);
+                    toast({
+                      title: "Autenticação recuperada",
+                      description: "A autenticação foi restaurada com sucesso.",
+                    });
+                    fetchDailyRecord();
+                  } else {
+                    toast({
+                      title: "Falha na autenticação",
+                      description: "Não foi possível restaurar a autenticação.",
+                      variant: "destructive",
+                    });
+                  }
+                } catch (error) {
+                  console.error('Erro ao tentar sincronizar:', error);
+                }
+              }}
+            >
+              Tentar novamente
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <DatePicker date={date} setDate={setDate} />
 
-          {isLoading ? (
-            <div className="flex justify-center py-6">
-              <div className="animate-pulse text-muted-foreground">Carregando dados...</div>
-            </div>
-          ) : (
-            <>
-              <TrackingForm 
-                investment={investment}
-                setInvestment={setInvestment}
-                sales={sales}
-                setSales={setSales}
-                revenue={revenue}
-                setRevenue={setRevenue}
-              />
+            {isLoading ? (
+              <div className="flex justify-center py-6">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Carregando dados...</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <TrackingForm 
+                  investment={investment}
+                  setInvestment={setInvestment}
+                  sales={sales}
+                  setSales={setSales}
+                  revenue={revenue}
+                  setRevenue={setRevenue}
+                />
 
-              <MetricsDisplay
-                profit={profit}
-                costPerSale={costPerSale}
-                roas={roas}
-              />
-            </>
-          )}
-        </form>
+                <MetricsDisplay
+                  profit={profit}
+                  costPerSale={costPerSale}
+                  roas={roas}
+                />
+              </>
+            )}
+          </form>
+        )}
       </CardContent>
       <CardFooter>
         <Button 
           type="submit" 
           onClick={handleSubmit}
           className="w-full"
-          disabled={isSubmitting || isLoading || !isSignedIn}
+          disabled={isSubmitting || isLoading || !isSignedIn || authError}
         >
-          <Save className="mr-2 h-5 w-5" />
-          {isSubmitting ? "Salvando..." : isSignedIn ? "Salvar Dados" : "Faça login para salvar"}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Salvando...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-5 w-5" />
+              {isSignedIn ? "Salvar Dados" : "Faça login para salvar"}
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>

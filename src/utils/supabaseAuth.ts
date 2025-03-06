@@ -1,116 +1,94 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@clerk/clerk-react';
 
 /**
- * Sets the Supabase auth token using the current user's session
- * This allows us to use Clerk's authentication with Supabase's RLS
+ * Sincroniza a autenticação entre Clerk e Supabase
+ * Retorna true se for bem-sucedido, false caso contrário
  */
-export const setSupabaseToken = async (token: string | null) => {
+export const syncSupabaseAuth = async (): Promise<boolean> => {
   try {
-    if (token) {
-      console.log('Configurando sessão do Supabase com token JWT do Clerk');
-      
-      // Set the auth token in Supabase
-      const { data, error } = await supabase.auth.setSession({
-        access_token: token,
-        refresh_token: '',
-      });
-      
-      if (error) {
-        console.error('Erro ao definir sessão do Supabase:', error);
-        return false;
-      }
-      
-      console.log('Sessão do Supabase definida com sucesso');
-      return true;
-    } else {
-      // Clear the auth session if no token
-      console.log('Removendo sessão do Supabase');
-      await supabase.auth.signOut();
+    // Verifica se estamos em um navegador
+    if (typeof window === 'undefined') {
+      console.log('Não estamos em um navegador');
       return false;
     }
-  } catch (error) {
-    console.error('Erro ao definir token do Supabase:', error);
-    return false;
-  }
-};
 
-/**
- * Gets the active session JWT token from Clerk
- */
-export const getClerkToken = async () => {
-  try {
-    // This requires the window object, so we need to check if we're in a browser
-    if (typeof window !== 'undefined') {
-      if (!window.Clerk) {
-        console.log('Clerk não está disponível no navegador');
-        return null;
-      }
-      
-      if (!window.Clerk.session) {
-        console.log('Não há sessão do Clerk ativa');
-        return null;
-      }
-      
-      console.log('Obtendo token do Clerk...');
-      const token = await window.Clerk.session.getToken({ template: 'supabase' });
-      
-      if (!token) {
-        console.log('Token do Clerk não encontrado');
-        return null;
-      }
-      
-      console.log('Token do Clerk obtido com sucesso');
-      return token;
+    // Obtém a sessão do Clerk
+    if (!window.Clerk || !window.Clerk.session) {
+      console.log('Sessão do Clerk não está disponível');
+      return false;
     }
-    
-    console.log('Clerk não está disponível (não no navegador)');
-    return null;
-  } catch (error) {
-    console.error('Erro ao obter token do Clerk:', error);
-    return null;
-  }
-};
 
-/**
- * Synchronizes Clerk authentication with Supabase
- * Returns true if successful, false otherwise
- */
-export const syncSupabaseAuth = async () => {
-  try {
-    console.log('Sincronizando autenticação com Supabase...');
-    
-    // Get token from Clerk
-    const token = await getClerkToken();
+    // Obtém o token JWT com o template do Supabase
+    const token = await window.Clerk.session.getToken({ template: 'supabase' });
     
     if (!token) {
-      console.log('Sem token do Clerk, limpando sessão do Supabase');
-      await setSupabaseToken(null);
+      console.log('Não foi possível obter o token JWT do Clerk');
       return false;
     }
     
-    // Set token in Supabase
-    const success = await setSupabaseToken(token);
+    // Define a sessão do Supabase com o token JWT
+    const { error } = await supabase.auth.setSession({
+      access_token: token,
+      refresh_token: '',
+    });
     
-    if (success) {
-      console.log('Autenticação com Supabase sincronizada com sucesso');
-      return true;
-    } else {
-      console.error('Falha ao sincronizar autenticação com Supabase');
+    if (error) {
+      console.error('Erro ao definir a sessão do Supabase:', error);
       return false;
     }
+    
+    return true;
   } catch (error) {
     console.error('Erro ao sincronizar autenticação:', error);
     return false;
   }
 };
 
-// Add type declaration for Clerk
+/**
+ * Obtém o ID do usuário autenticado no formato adequado para o Supabase
+ * a partir da sessão do Clerk
+ */
+export const getAuthUserId = (): string | null => {
+  try {
+    if (typeof window === 'undefined' || !window.Clerk || !window.Clerk.session) {
+      return null;
+    }
+    
+    return window.Clerk.session.id || null;
+  } catch (error) {
+    console.error('Erro ao obter ID do usuário:', error);
+    return null;
+  }
+};
+
+/**
+ * Hook personalizado para obter o token JWT para Supabase
+ * Não use diretamente - Use syncSupabaseAuth em vez disso
+ */
+export const useSupabaseToken = () => {
+  const { getToken } = useAuth();
+  
+  const getSupabaseToken = async () => {
+    try {
+      return await getToken({ template: 'supabase' });
+    } catch (error) {
+      console.error('Erro ao obter token do Supabase:', error);
+      return null;
+    }
+  };
+  
+  return { getSupabaseToken };
+};
+
+// Adicionar tipo para o Clerk na janela
 declare global {
   interface Window {
     Clerk?: {
       session?: {
-        getToken: (options: { template: string }) => Promise<string | null>;
+        id?: string;
+        getToken: (options: { template: string }) => Promise<string>;
       };
     };
   }

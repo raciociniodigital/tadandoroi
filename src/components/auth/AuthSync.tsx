@@ -1,9 +1,10 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { syncSupabaseAuth } from '@/utils/supabaseAuth';
+import { Loader2 } from 'lucide-react';
 
 interface AuthSyncProps {
   children: React.ReactNode;
@@ -14,38 +15,87 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  // Lista de caminhos públicos (não requerem autenticação)
+  const publicPaths = ['/', '/login', '/register'];
+  const isPublicPath = publicPaths.includes(location.pathname);
 
   useEffect(() => {
-    console.log("AuthSync: isSignedIn =", isSignedIn, "isLoaded =", isLoaded, "path =", location.pathname);
+    let isMounted = true;
     
-    // Don't redirect on public paths
-    const publicPaths = ['/', '/login', '/register'];
-    const isPublicPath = publicPaths.includes(location.pathname);
-    
-    if (isLoaded && !isSignedIn && !isPublicPath) {
-      toast({
-        title: "Acesso não autorizado",
-        description: "Por favor, faça login para acessar esta página",
-        variant: "destructive",
-      });
-      navigate('/login');
-    }
-    
-    // If signed in, sync auth with Supabase
-    if (isLoaded && isSignedIn) {
-      syncSupabaseAuth().then(success => {
-        if (!success) {
-          console.warn('Não foi possível sincronizar autenticação com Supabase');
+    const checkAuthAndSync = async () => {
+      if (!isLoaded) return;
+  
+      console.log("AuthSync: isSignedIn =", isSignedIn, "isLoaded =", isLoaded, "path =", location.pathname);
+      
+      // Verifica autenticação e redireciona se necessário
+      if (!isSignedIn && !isPublicPath) {
+        toast({
+          title: "Acesso não autorizado",
+          description: "Por favor, faça login para acessar esta página",
+          variant: "destructive",
+        });
+        navigate('/login');
+        if (isMounted) setIsAuthChecking(false);
+        return;
+      }
+      
+      // Se estiver autenticado, sincroniza com Supabase
+      if (isSignedIn) {
+        try {
+          const success = await syncSupabaseAuth();
+          
+          if (!success && !isPublicPath) {
+            console.warn('Não foi possível sincronizar com Supabase. Tentando novamente...');
+            
+            // Tenta mais uma vez após um curto atraso
+            setTimeout(async () => {
+              if (!isMounted) return;
+              
+              const retrySuccess = await syncSupabaseAuth();
+              if (!retrySuccess && !isPublicPath) {
+                toast({
+                  title: "Erro de autenticação",
+                  description: "Problema na autenticação com Supabase. Tente fazer login novamente.",
+                  variant: "destructive",
+                });
+                navigate('/login');
+              }
+              
+              if (isMounted) setIsAuthChecking(false);
+            }, 1500);
+            
+            return;
+          }
+        } catch (error) {
+          console.error('Erro ao sincronizar com Supabase:', error);
         }
-      });
-    }
-  }, [isSignedIn, isLoaded, navigate, toast, location.pathname]);
+      }
+      
+      if (isMounted) setIsAuthChecking(false);
+    };
+    
+    checkAuthAndSync();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [isSignedIn, isLoaded, navigate, toast, location.pathname, isPublicPath]);
 
-  if (!isLoaded) {
-    return <div className="flex h-screen w-full items-center justify-center">Carregando...</div>;
+  // Mostra um indicador de carregamento enquanto verifica autenticação
+  if (isAuthChecking && !isPublicPath) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
   }
 
-  // Render the content normally
+  // Renderiza o conteúdo normalmente
   return <>{children}</>;
 };
 

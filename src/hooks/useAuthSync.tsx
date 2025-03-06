@@ -10,34 +10,90 @@ export const useAuthSync = () => {
   const { user } = useUser();
   const { toast } = useToast();
   const [isSynced, setIsSynced] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const syncUserData = async () => {
       if (!isSignedIn || !userId || !user) {
-        setIsSynced(false);
+        if (isMounted) {
+          setIsSynced(false);
+          setIsSyncing(false);
+        }
         return;
       }
       
+      if (isSyncing) return; // Evita múltiplas sincronizações simultâneas
+      
+      if (isMounted) {
+        setIsSyncing(true);
+      }
+      
       try {
-        // First, make sure authentication is synced
+        // Primeiro, certifica-se de que a autenticação está sincronizada
+        console.log('useAuthSync: Sincronizando autenticação...');
+        
         const authSynced = await syncSupabaseAuth();
         
         if (!authSynced) {
-          console.error('Falha ao sincronizar autenticação com Supabase');
-          setIsSynced(false);
+          console.error('useAuthSync: Falha ao sincronizar autenticação');
+          if (isMounted) {
+            setIsSynced(false);
+            setIsSyncing(false);
+          }
+          
+          // Tenta uma vez mais após um curto atraso
+          setTimeout(async () => {
+            if (!isMounted) return;
+            
+            console.log('useAuthSync: Tentando sincronizar novamente...');
+            const retrySuccess = await syncSupabaseAuth();
+            
+            if (!retrySuccess) {
+              console.error('useAuthSync: Falha na sincronização mesmo após retry');
+              if (isMounted) {
+                setIsSynced(false);
+                setIsSyncing(false);
+              }
+              return;
+            }
+            
+            if (isMounted) {
+              await createOrUpdateUser();
+            }
+          }, 1500);
+          
           return;
         }
         
-        // Get the primary email address
-        const email = user.emailAddresses?.[0]?.emailAddress;
+        if (isMounted) {
+          await createOrUpdateUser();
+        }
+      } catch (error) {
+        console.error('useAuthSync: Erro ao sincronizar dados do usuário:', error);
+        if (isMounted) {
+          setIsSynced(false);
+          setIsSyncing(false);
+        }
+      }
+    };
+    
+    const createOrUpdateUser = async () => {
+      try {
+        // Obtém o endereço de email principal
+        const email = user?.emailAddresses?.[0]?.emailAddress;
         
         if (!email) {
-          console.error('Usuário não possui endereço de email');
-          setIsSynced(false);
+          console.error('useAuthSync: Usuário não possui endereço de email');
+          if (isMounted) {
+            setIsSynced(false);
+            setIsSyncing(false);
+          }
           return;
         }
         
-        // Check if user exists in Supabase
+        // Verifica se o usuário existe no Supabase
         const { data: existingUser, error: fetchError } = await supabase
           .from('users')
           .select('*')
@@ -45,46 +101,88 @@ export const useAuthSync = () => {
           .maybeSingle();
         
         if (fetchError) {
-          console.error('Erro ao verificar usuário:', fetchError);
-          setIsSynced(false);
+          console.error('useAuthSync: Erro ao verificar usuário:', fetchError);
+          if (isMounted) {
+            setIsSynced(false);
+            setIsSyncing(false);
+          }
           return;
         }
         
         if (!existingUser) {
-          // Create user if doesn't exist
-          console.log('Criando novo usuário no Supabase');
+          // Cria usuário se não existir
+          console.log('useAuthSync: Criando novo usuário no Supabase');
           
-          // Using RPC to call function that bypasses RLS
+          // Usando RPC para chamar função que ignora RLS
           const { error: insertError } = await supabase.rpc('create_user', {
             user_id_param: userId,
             email_param: email
           });
           
           if (insertError) {
-            console.error('Erro ao criar usuário no Supabase:', insertError);
+            console.error('useAuthSync: Erro ao criar usuário no Supabase:', insertError);
             toast({
               title: "Erro ao sincronizar usuário",
               description: "Não foi possível criar seu perfil no banco de dados.",
               variant: "destructive",
             });
-            setIsSynced(false);
+            if (isMounted) {
+              setIsSynced(false);
+              setIsSyncing(false);
+            }
             return;
           }
           
-          console.log('Usuário criado com sucesso no Supabase');
+          console.log('useAuthSync: Usuário criado com sucesso no Supabase');
         } else {
-          console.log('Usuário já existe no Supabase');
+          console.log('useAuthSync: Usuário já existe no Supabase');
         }
         
-        setIsSynced(true);
+        if (isMounted) {
+          setIsSynced(true);
+          setIsSyncing(false);
+        }
       } catch (error) {
-        console.error('Erro ao sincronizar dados do usuário:', error);
-        setIsSynced(false);
+        console.error('useAuthSync: Erro ao criar/atualizar usuário:', error);
+        if (isMounted) {
+          setIsSynced(false);
+          setIsSyncing(false);
+        }
       }
     };
     
     syncUserData();
+    
+    // Configura timer para sincronizar periodicamente
+    const syncInterval = setInterval(() => {
+      if (isSignedIn && userId) {
+        syncUserData();
+      }
+    }, 30 * 60 * 1000); // A cada 30 minutos
+    
+    return () => {
+      isMounted = false;
+      clearInterval(syncInterval);
+    };
   }, [isSignedIn, userId, user, toast]);
 
-  return { isSignedIn, userId, isSynced };
+  return { 
+    isSignedIn, 
+    userId, 
+    isSynced,
+    resync: async () => {
+      setIsSyncing(true);
+      try {
+        const success = await syncSupabaseAuth();
+        setIsSynced(success);
+        return success;
+      } catch (error) {
+        console.error('Erro ao ressincronizar:', error);
+        setIsSynced(false);
+        return false;
+      } finally {
+        setIsSyncing(false);
+      }
+    }
+  };
 };

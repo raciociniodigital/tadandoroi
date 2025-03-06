@@ -4,27 +4,49 @@ import { useAuth } from '@clerk/clerk-react';
 import { useToast } from '@/hooks/use-toast';
 import { syncSupabaseAuth } from '@/utils/supabaseAuth';
 
+const SYNC_INTERVAL = 10 * 60 * 1000; // 10 minutos
+
 const ClerkSupabaseAuth = ({ children }: { children: React.ReactNode }) => {
   const { isSignedIn, isLoaded } = useAuth();
   const [isAuthSynced, setIsAuthSynced] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    let intervalId: number;
+    let intervalId: number | null = null;
     
     const handleAuthSync = async () => {
       try {
         if (!isLoaded) return;
         
         if (isSignedIn) {
+          console.log('ClerkSupabaseAuth: Sincronizando autenticação...');
+          
           const success = await syncSupabaseAuth();
           setIsAuthSynced(success);
           
           if (!success) {
-            console.error('Falha ao sincronizar autenticação com Supabase');
+            console.error('ClerkSupabaseAuth: Falha ao sincronizar autenticação');
+            
+            // Abrir a página para reconfigurar o template JWT
+            // Este é um hack que força o browser a reconhecer o template JWT do Supabase
+            const configWindow = window.open('/clerk-supabase.html', 'config_jwt', 'width=600,height=400');
+            
+            // Tenta sincronizar novamente após 3 segundos
+            setTimeout(async () => {
+              const retrySuccess = await syncSupabaseAuth();
+              if (retrySuccess) {
+                console.log('ClerkSupabaseAuth: Sincronização bem-sucedida após retry');
+                setIsAuthSynced(true);
+                if (configWindow) configWindow.close();
+              } else {
+                console.error('ClerkSupabaseAuth: Falha na sincronização mesmo após retry');
+              }
+            }, 3000);
+          } else {
+            console.log('ClerkSupabaseAuth: Sincronização bem-sucedida');
           }
         } else {
-          // User is not signed in, clear Supabase session
+          // Usuário não está logado, limpar estado
           setIsAuthSynced(false);
         }
       } catch (error) {
@@ -33,12 +55,14 @@ const ClerkSupabaseAuth = ({ children }: { children: React.ReactNode }) => {
       }
     };
     
-    // Sync auth when component mounts or auth state changes
-    handleAuthSync();
+    // Sincronizar autenticação quando o componente montar ou o estado de autenticação mudar
+    if (isLoaded) {
+      handleAuthSync();
     
-    // Set up an interval to refresh the token (every 10 minutes)
-    if (isSignedIn) {
-      intervalId = window.setInterval(handleAuthSync, 10 * 60 * 1000);
+      // Configurar intervalo para atualizar o token periodicamente (apenas se usuário estiver logado)
+      if (isSignedIn) {
+        intervalId = window.setInterval(handleAuthSync, SYNC_INTERVAL);
+      }
     }
     
     return () => {
@@ -46,7 +70,7 @@ const ClerkSupabaseAuth = ({ children }: { children: React.ReactNode }) => {
     };
   }, [isSignedIn, isLoaded]);
 
-  // Just render children - we handle the syncing in the background
+  // Apenas renderiza children - lidamos com a sincronização em segundo plano
   return <>{children}</>;
 };
 
