@@ -1,19 +1,8 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { SignIn, useAuth } from '@clerk/clerk-react';
+import { Link } from 'react-router-dom';
+import { SignIn } from '@clerk/clerk-react';
 
 const Login = () => {
-  const { isSignedIn } = useAuth();
-  const navigate = useNavigate();
-
-  // Redirect to daily tracking if already signed in
-  useEffect(() => {
-    if (isSignedIn) {
-      navigate('/daily');
-    }
-  }, [isSignedIn, navigate]);
-
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background px-4">
       <div className="mb-8 text-center">
@@ -27,6 +16,10 @@ const Login = () => {
       
       <div className="w-full max-w-md animate-fade-up">
         <SignIn 
+          path="/login"
+          routing="path"
+          signUpUrl="/register"
+          afterSignInUrl="/daily"
           appearance={{
             elements: {
               rootBox: "w-full max-w-md mx-auto",
@@ -40,6 +33,14 @@ const Login = () => {
             },
           }}
         />
+        <div className="mt-4 text-center text-sm text-muted-foreground">
+          <p>
+            Ainda não tem uma conta?{' '}
+            <Link to="/register" className="text-primary hover:underline">
+              Registre-se aqui
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
