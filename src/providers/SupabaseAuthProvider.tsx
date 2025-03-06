@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +8,7 @@ type SupabaseAuthContextType = {
   user: User | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, redirectTo?: string) => Promise<{ error: any, user: User | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: any, user: User | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -22,11 +21,9 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Obter a sessão inicial e configurar o listener de alterações de autenticação
     const getInitialSession = async () => {
       setIsLoading(true);
       
-      // Verificar se há uma sessão ativa
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -45,7 +42,6 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
     getInitialSession();
 
-    // Configurar o listener para alterações de autenticação
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Evento de autenticação:', event);
@@ -56,13 +52,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Limpar o listener quando o componente for desmontado
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, [toast]);
 
-  // Função para fazer login
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -79,19 +73,19 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  // Função para registrar-se
-  const signUp = async (email: string, password: string, redirectTo?: string) => {
+  const signUp = async (email: string, password: string) => {
     setIsLoading(true);
     
-    const options = {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: redirectTo ? { emailRedirectTo: redirectTo } : undefined
-    };
-    
-    console.log('Criando usuário com opções:', { ...options, password: '***' });
-    
-    const { data, error } = await supabase.auth.signUp(options);
+      options: {
+        emailRedirectTo: undefined,
+        data: {
+          email_confirmed: true
+        }
+      }
+    });
     
     setIsLoading(false);
     
@@ -104,14 +98,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     } else {
       toast({
         title: "Conta criada com sucesso",
-        description: "Verifique seu email para confirmar seu cadastro.",
+        description: "Você já pode fazer login com suas credenciais.",
       });
     }
     
     return { error, user: data.user };
   };
 
-  // Função para sair
   const signOut = async () => {
     setIsLoading(true);
     await supabase.auth.signOut();
