@@ -27,8 +27,6 @@ const Register = () => {
       
       <div className="w-full max-w-md animate-fade-up">
         <SignUp 
-          path="/register" 
-          signInUrl="/login"
           redirectUrl="/daily"
           appearance={{
             elements: {

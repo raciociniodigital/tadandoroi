@@ -28,83 +28,56 @@ const App = () => (
           <Route path="/" element={<Index />} />
           
           {/* Auth routes */}
-          <Route 
-            path="/login" 
-            element={
-              <SignedIn>
-                <Navigate to="/daily" replace />
-              </SignedIn>
-            }
-          />
-          <Route 
-            path="/login" 
-            element={
-              <SignedOut>
-                <Login />
-              </SignedOut>
-            }
-          />
+          <Route path="/login" element={
+            <SignedIn>
+              <Navigate to="/daily" replace />
+            </SignedIn>
+          } />
+          <Route path="/login" element={
+            <SignedOut>
+              <Login />
+            </SignedOut>
+          } />
           
-          <Route 
-            path="/register" 
-            element={
-              <SignedIn>
-                <Navigate to="/daily" replace />
-              </SignedIn>
-            }
-          />
-          <Route 
-            path="/register" 
-            element={
-              <SignedOut>
-                <Register />
-              </SignedOut>
-            }
-          />
+          <Route path="/register" element={
+            <SignedIn>
+              <Navigate to="/daily" replace />
+            </SignedIn>
+          } />
+          <Route path="/register" element={
+            <SignedOut>
+              <Register />
+            </SignedOut>
+          } />
 
           {/* Rotas protegidas */}
-          <Route 
-            path="/daily" 
-            element={
-              <AuthSync>
-                <DailyTracking />
-              </AuthSync>
-            } 
-          />
-          <Route 
-            path="/analytics" 
-            element={
-              <AuthSync>
-                <Analytics />
-              </AuthSync>
-            } 
-          />
-          <Route 
-            path="/records" 
-            element={
-              <AuthSync>
-                <Records />
-              </AuthSync>
-            } 
-          />
-          <Route 
-            path="/profile" 
-            element={
-              <AuthSync>
-                <Profile />
-              </AuthSync>
-            } 
-          />
+          <Route path="/daily" element={
+            <AuthSync>
+              <DailyTracking />
+            </AuthSync>
+          } />
+          <Route path="/analytics" element={
+            <AuthSync>
+              <Analytics />
+            </AuthSync>
+          } />
+          <Route path="/records" element={
+            <AuthSync>
+              <Records />
+            </AuthSync>
+          } />
+          <Route path="/profile" element={
+            <AuthSync>
+              <Profile />
+            </AuthSync>
+          } />
           
           {/* Redirecionar para a página principal se estiver logado */}
-          <Route 
-            path="/signin" 
-            element={
-              <SignedIn>
-                <Navigate to="/daily" replace />
-              </SignedIn>
-            } 
-          />
+          <Route path="/signin" element={
+            <SignedIn>
+              <Navigate to="/daily" replace />
+            </SignedIn>
+          } />
           
           {/* Rota para todas as outras páginas */}
           <Route path="*" element={<NotFound />} />
