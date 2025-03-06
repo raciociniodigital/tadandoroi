@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -22,9 +23,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
+  const { logout } = useAuth();
   
   const handleLogout = () => {
-    // Here we'd handle actual logout logic
+    logout();
     toast({
       title: "Logged out successfully",
       description: "You have been logged out of your account",
@@ -74,9 +76,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               {!collapsed && (
                 <Link 
                   to="/" 
-                  className="text-2xl font-bold tracking-tight text-gradient"
+                  className="text-2xl font-bold tracking-tight"
                 >
-                  Traffic<span className="text-foreground">Tracker</span>
+                  <span className="text-foreground">Tá Dando</span><span className="text-primary">ROI</span>
                 </Link>
               )}
               <Button
