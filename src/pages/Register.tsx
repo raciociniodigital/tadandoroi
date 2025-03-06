@@ -1,5 +1,5 @@
 
-import { ClerkRegisterForm } from '@/components/auth/ClerkAuth';
+import { RegisterForm } from '@/components/auth/AuthForms';
 
 const Register = () => {
   return (
@@ -13,7 +13,7 @@ const Register = () => {
         </p>
       </div>
       
-      <ClerkRegisterForm />
+      <RegisterForm />
     </div>
   );
 };
