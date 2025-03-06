@@ -1,7 +1,19 @@
 
-import { LoginForm } from '@/components/auth/AuthForms';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { SignIn, useAuth } from '@clerk/clerk-react';
 
 const Login = () => {
+  const { isSignedIn } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to daily tracking if already signed in
+  useEffect(() => {
+    if (isSignedIn) {
+      navigate('/daily');
+    }
+  }, [isSignedIn, navigate]);
+
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background px-4">
       <div className="mb-8 text-center">
@@ -13,7 +25,24 @@ const Login = () => {
         </p>
       </div>
       
-      <LoginForm />
+      <div className="w-full max-w-md animate-fade-up">
+        <SignIn 
+          path="/login" 
+          signUpUrl="/register"
+          appearance={{
+            elements: {
+              rootBox: "w-full max-w-md mx-auto",
+              card: "shadow-lg rounded-lg border border-border bg-card",
+              headerTitle: "text-xl font-semibold text-foreground",
+              headerSubtitle: "text-muted-foreground",
+              formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
+              formFieldLabel: "text-foreground",
+              formFieldInput: "bg-background border-border text-foreground",
+              footerActionLink: "text-primary hover:underline",
+            },
+          }}
+        />
+      </div>
     </div>
   );
 };
