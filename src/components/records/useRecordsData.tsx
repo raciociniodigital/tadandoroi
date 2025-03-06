@@ -169,7 +169,16 @@ export const useRecordsData = () => {
   };
 
   const handleSave = async () => {
-    if (editingDay === null || !isSignedIn || !userId) return;
+    if (editingDay === null || !isSignedIn || !userId) {
+      if (!isSignedIn) {
+        toast({
+          title: "Usuário não autenticado",
+          description: "Você precisa estar logado para salvar dados.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
     
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();

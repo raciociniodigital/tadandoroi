@@ -111,17 +111,18 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     
     setIsSubmitting(true);
 
-    // Convert form data
-    const data: TrackingData = {
-      investment: investmentValue,
-      sales: salesValue,
-      revenue: revenueValue,
-    };
-
-    // Format date as string for Supabase
-    const dateStr = format(date, 'yyyy-MM-dd');
-
     try {
+      // Convert form data
+      const data: TrackingData = {
+        investment: investmentValue,
+        sales: salesValue,
+        revenue: revenueValue,
+      };
+
+      // Format date as string for Supabase
+      const dateStr = format(date, 'yyyy-MM-dd');
+
+      // Logging for debugging
       console.log('Salvando dados:', {
         user_id: userId,
         date: dateStr,
@@ -130,7 +131,7 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         revenue: data.revenue
       });
       
-      // Upsert the record to Supabase
+      // Important: Make sure we're using the userId as a string here
       const { error } = await supabase
         .from('daily_records')
         .upsert({
@@ -149,6 +150,8 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         throw error;
       }
       
+      console.log("Dados salvos com sucesso!");
+      
       if (onDataSubmit) {
         onDataSubmit(date, data);
       }
@@ -157,8 +160,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         title: "Dados salvos com sucesso",
         description: `Registro para ${format(date, 'PPP', { locale: ptBR })} foi salvo.`,
       });
-      
-      console.log("Daily record saved to Supabase");
     } catch (error) {
       console.error('Erro ao salvar dados:', error);
       toast({
@@ -212,10 +213,10 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
           type="submit" 
           onClick={handleSubmit}
           className="w-full"
-          disabled={isSubmitting || isLoading}
+          disabled={isSubmitting || isLoading || !isSignedIn}
         >
           <Save className="mr-2 h-5 w-5" />
-          {isSubmitting ? "Salvando..." : "Salvar Dados"}
+          {isSubmitting ? "Salvando..." : isSignedIn ? "Salvar Dados" : "Faça login para salvar"}
         </Button>
       </CardFooter>
     </Card>
