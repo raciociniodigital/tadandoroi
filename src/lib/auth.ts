@@ -9,7 +9,6 @@ export const useUser = () => {
   const { userId, isLoaded, isSignedIn } = useAuth();
   const supabase = useSupabaseClient();
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {

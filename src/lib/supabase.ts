@@ -46,12 +46,12 @@ export const useSupabaseClient = () => {
 
 // Hook para sincronizar o usuário do Clerk com o Supabase
 export const useSyncUser = () => {
-  const { userId, user } = useAuth();
+  const { userId, sessionId } = useAuth();
   const supabase = useSupabaseClient();
 
   useEffect(() => {
     const syncUser = async () => {
-      if (!userId || !user) return;
+      if (!userId || !sessionId) return;
 
       try {
         // Verificar se o usuário já existe
@@ -73,8 +73,8 @@ export const useSyncUser = () => {
             .insert([
               {
                 user_id: userId,
-                email: user.primaryEmailAddress?.emailAddress,
-                nome: `${user.firstName} ${user.lastName || ''}`.trim(),
+                email: 'usuario@exemplo.com', // Sem acesso ao email do usuário aqui
+                nome: 'Usuário', // Sem acesso ao nome do usuário aqui
               },
             ]);
 
@@ -88,7 +88,7 @@ export const useSyncUser = () => {
     };
 
     syncUser();
-  }, [userId, user, supabase]);
+  }, [userId, sessionId, supabase]);
 };
 
 // Função auxiliar para obter o ID do usuário atual
