@@ -33,7 +33,14 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
     return <div className="flex h-screen w-full items-center justify-center">Carregando...</div>;
   }
 
-  return <>{children}</>;
+  // Se o usuário estiver autenticado, renderize o conteúdo normalmente
+  if (isSignedIn) {
+    return <>{children}</>;
+  }
+
+  // Este retorno é apenas um fallback, na prática o useEffect acima
+  // redirecionará para a página de login
+  return null;
 };
 
 export default AuthSync;

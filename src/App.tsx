@@ -63,6 +63,16 @@ const App = () => (
             } 
           />
           
+          {/* Redirecionar para a página principal se estiver logado e acessar rotas públicas */}
+          <Route 
+            path="/signin" 
+            element={
+              <SignedIn>
+                <Navigate to="/daily" replace />
+              </SignedIn>
+            } 
+          />
+          
           {/* Rota para todas as outras páginas */}
           <Route path="*" element={<NotFound />} />
         </Routes>
