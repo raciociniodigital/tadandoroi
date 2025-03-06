@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/ClerkAuth";
+import { useSyncUser } from "@/lib/supabase";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -16,12 +17,20 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Componente para sincronizar usuário quando autenticado
+const UserSync = () => {
+  useSyncUser();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        {/* Componente de sincronização do usuário */}
+        <UserSync />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />

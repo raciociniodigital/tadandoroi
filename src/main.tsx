@@ -14,7 +14,17 @@ if (!CLERK_PUBLISHABLE_KEY) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider 
+      publishableKey={CLERK_PUBLISHABLE_KEY}
+      // Configurando templates JWT que serão usados pelo Supabase
+      jwtTemplates={{
+        supabase: {
+          // Supabase requer o template com claim específicos
+          issuer: 'clerk',
+          lifespan: 60 * 60, // 1 hora
+        }
+      }}
+    >
       <App />
     </ClerkProvider>
   </React.StrictMode>,
