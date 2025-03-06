@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import AuthSync from "./components/auth/AuthSync";
 import Index from "./pages/Index";
@@ -28,56 +28,67 @@ const App = () => (
           <Route path="/" element={<Index />} />
           
           {/* Auth routes */}
-          <Route path="/login" element={
-            <SignedIn>
-              <Navigate to="/daily" replace />
-            </SignedIn>
-          } />
-          <Route path="/login" element={
-            <SignedOut>
-              <Login />
-            </SignedOut>
-          } />
+          <Route 
+            path="/login" 
+            element={
+              <>
+                <SignedIn>
+                  <DailyTracking />
+                </SignedIn>
+                <SignedOut>
+                  <Login />
+                </SignedOut>
+              </>
+            } 
+          />
           
-          <Route path="/register" element={
-            <SignedIn>
-              <Navigate to="/daily" replace />
-            </SignedIn>
-          } />
-          <Route path="/register" element={
-            <SignedOut>
-              <Register />
-            </SignedOut>
-          } />
+          <Route 
+            path="/register" 
+            element={
+              <>
+                <SignedIn>
+                  <DailyTracking />
+                </SignedIn>
+                <SignedOut>
+                  <Register />
+                </SignedOut>
+              </>
+            } 
+          />
 
           {/* Rotas protegidas */}
-          <Route path="/daily" element={
-            <AuthSync>
-              <DailyTracking />
-            </AuthSync>
-          } />
-          <Route path="/analytics" element={
-            <AuthSync>
-              <Analytics />
-            </AuthSync>
-          } />
-          <Route path="/records" element={
-            <AuthSync>
-              <Records />
-            </AuthSync>
-          } />
-          <Route path="/profile" element={
-            <AuthSync>
-              <Profile />
-            </AuthSync>
-          } />
-          
-          {/* Redirecionar para a página principal se estiver logado */}
-          <Route path="/signin" element={
-            <SignedIn>
-              <Navigate to="/daily" replace />
-            </SignedIn>
-          } />
+          <Route 
+            path="/daily" 
+            element={
+              <AuthSync>
+                <DailyTracking />
+              </AuthSync>
+            } 
+          />
+          <Route 
+            path="/analytics" 
+            element={
+              <AuthSync>
+                <Analytics />
+              </AuthSync>
+            } 
+          />
+          <Route 
+            path="/records" 
+            element={
+              <AuthSync>
+                <Records />
+              </AuthSync>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <AuthSync>
+                <Profile />
+              </AuthSync>
+            } 
+          />
           
           {/* Rota para todas as outras páginas */}
           <Route path="*" element={<NotFound />} />

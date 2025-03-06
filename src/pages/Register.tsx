@@ -27,7 +27,6 @@ const Register = () => {
       
       <div className="w-full max-w-md animate-fade-up">
         <SignUp 
-          redirectUrl="/daily"
           appearance={{
             elements: {
               rootBox: "w-full max-w-md mx-auto",

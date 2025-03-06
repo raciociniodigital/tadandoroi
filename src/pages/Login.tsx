@@ -27,7 +27,6 @@ const Login = () => {
       
       <div className="w-full max-w-md animate-fade-up">
         <SignIn 
-          redirectUrl="/daily"
           appearance={{
             elements: {
               rootBox: "w-full max-w-md mx-auto",
