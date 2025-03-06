@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { syncSupabaseAuth } from '@/utils/supabaseAuth';
+import { syncSupabaseAuth } from '@/utils/authUtils';
 
 export const useAuthSync = () => {
   const { isSignedIn, userId } = useAuth();

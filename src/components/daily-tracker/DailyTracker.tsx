@@ -11,7 +11,7 @@ import MetricsDisplay from './MetricsDisplay';
 import { useTrackingCalculations } from './useTrackingCalculations';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
-import { syncSupabaseAuth, getClerkToken, setSupabaseToken } from '@/utils/supabaseAuth';
+import { syncSupabaseAuth, getClerkToken, setSupabaseToken } from '@/utils/authUtils';
 
 interface TrackingData {
   investment: number;

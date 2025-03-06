@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@clerk/clerk-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { getClerkToken, setSupabaseToken } from '@/utils/supabaseAuth';
+import { getClerkToken, setSupabaseToken } from '@/utils/authUtils';
 
 interface DailyRecord {
   id?: string;

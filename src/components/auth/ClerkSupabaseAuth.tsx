@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useToast } from '@/hooks/use-toast';
-import { syncSupabaseAuth } from '@/utils/supabaseAuth';
+import { syncSupabaseAuth } from '@/utils/authUtils';
 
 const SYNC_INTERVAL = 10 * 60 * 1000; // 10 minutos
 

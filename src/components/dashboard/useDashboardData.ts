@@ -1,9 +1,10 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
-import { getClerkToken, setSupabaseToken } from '@/utils/supabaseAuth';
+import { getClerkToken, setSupabaseToken } from '@/utils/authUtils';
 import { useToast } from '@/hooks/use-toast';
 
 export const useDashboardData = () => {
