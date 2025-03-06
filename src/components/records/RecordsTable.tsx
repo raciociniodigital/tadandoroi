@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   ChevronLeft, 
@@ -12,16 +13,27 @@ import {
   Calculator,
   Calendar
 } from 'lucide-react';
-import { format, addMonths, subMonths, getDaysInMonth, startOfMonth, getMonth, getYear, parseISO } from 'date-fns';
+import { 
+  format, 
+  addMonths, 
+  subMonths, 
+  getDaysInMonth, 
+  startOfMonth, 
+  getMonth, 
+  getYear,
+  parseISO 
+} from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { dailyRecords } from '@/components/daily-tracker/DailyTracker';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@clerk/clerk-react';
 
 interface DailyRecord {
+  id?: string;
   date: Date;
   investment: number;
   sales: number;
@@ -41,23 +53,57 @@ const RecordsTable = () => {
     revenue: ''
   });
   const [records, setRecords] = useState<DailyRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { userId, isSignedIn } = useAuth();
   
+  // Fetch records from Supabase when the month changes or user signs in
   useEffect(() => {
-    const loadedRecords: DailyRecord[] = [];
-    
-    Object.entries(dailyRecords).forEach(([dateStr, data]) => {
-      loadedRecords.push({
-        date: parseISO(dateStr),
-        investment: data.investment,
-        sales: data.sales,
-        revenue: data.revenue
-      });
-    });
-    
-    setRecords(loadedRecords);
-  }, [currentMonth, dailyRecords]);
+    const fetchRecords = async () => {
+      if (!isSignedIn || !userId) return;
+      
+      setIsLoading(true);
+      try {
+        const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+        const lastDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+        const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
+        
+        const { data, error } = await supabase
+          .from('daily_records')
+          .select('*')
+          .eq('user_id', userId)
+          .gte('date', startDate)
+          .lte('date', endDate);
+        
+        if (error) {
+          console.error('Erro ao buscar registros:', error);
+          toast({
+            title: "Erro ao carregar dados",
+            description: "Não foi possível buscar os registros para este mês.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        const formattedRecords: DailyRecord[] = data.map((record: any) => ({
+          id: record.id,
+          date: new Date(record.date),
+          investment: Number(record.investment),
+          sales: Number(record.sales),
+          revenue: Number(record.revenue)
+        }));
+        
+        setRecords(formattedRecords);
+      } catch (error) {
+        console.error('Erro ao buscar registros:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecords();
+  }, [currentMonth, userId, isSignedIn, toast]);
   
   const goToPreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
@@ -82,6 +128,7 @@ const RecordsTable = () => {
     if (!record) {
       return {
         day,
+        id: null,
         investment: null,
         sales: null,
         revenue: null,
@@ -100,6 +147,7 @@ const RecordsTable = () => {
     
     return {
       day,
+      id: record.id,
       investment,
       sales,
       revenue,
@@ -131,51 +179,86 @@ const RecordsTable = () => {
     });
   };
 
-  const handleSave = () => {
-    if (editingDay === null) return;
+  const handleSave = async () => {
+    if (editingDay === null || !isSignedIn || !userId) return;
     
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const dateToEdit = new Date(year, month, editingDay);
-    const dateKey = format(dateToEdit, 'yyyy-MM-dd');
+    const dateStr = format(dateToEdit, 'yyyy-MM-dd');
     
-    dailyRecords[dateKey] = {
-      investment: parseFloat(editData.investment) || 0,
-      sales: parseInt(editData.sales) || 0,
-      revenue: parseFloat(editData.revenue) || 0
-    };
-    
-    const updatedRecords = [...records];
-    const existingIndex = updatedRecords.findIndex(r => 
-      r.date.getDate() === editingDay && 
-      getMonth(r.date) === getMonth(currentMonth) && 
-      getYear(r.date) === getYear(currentMonth)
-    );
-    
-    if (existingIndex >= 0) {
-      updatedRecords[existingIndex] = {
-        date: dateToEdit,
+    try {
+      // Prepare data for Supabase
+      const recordData = {
+        user_id: userId,
+        date: dateStr,
         investment: parseFloat(editData.investment) || 0,
         sales: parseInt(editData.sales) || 0,
-        revenue: parseFloat(editData.revenue) || 0
+        revenue: parseFloat(editData.revenue) || 0,
+        updated_at: new Date().toISOString()
       };
-    } else {
-      updatedRecords.push({
-        date: dateToEdit,
-        investment: parseFloat(editData.investment) || 0,
-        sales: parseInt(editData.sales) || 0,
-        revenue: parseFloat(editData.revenue) || 0
+      
+      // Upsert to Supabase
+      const { error } = await supabase
+        .from('daily_records')
+        .upsert(recordData, {
+          onConflict: 'user_id,date'
+        });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Refresh the records
+      const { data: newRecord, error: fetchError } = await supabase
+        .from('daily_records')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('date', dateStr)
+        .single();
+      
+      if (fetchError) {
+        console.error('Erro ao buscar registro atualizado:', fetchError);
+      } else {
+        // Update local state
+        const updatedRecords = [...records];
+        const existingIndex = updatedRecords.findIndex(r => 
+          r.date.getDate() === editingDay && 
+          getMonth(r.date) === getMonth(currentMonth) && 
+          getYear(r.date) === getYear(currentMonth)
+        );
+        
+        const updatedRecord = {
+          id: newRecord.id,
+          date: new Date(newRecord.date),
+          investment: Number(newRecord.investment),
+          sales: Number(newRecord.sales),
+          revenue: Number(newRecord.revenue)
+        };
+        
+        if (existingIndex >= 0) {
+          updatedRecords[existingIndex] = updatedRecord;
+        } else {
+          updatedRecords.push(updatedRecord);
+        }
+        
+        setRecords(updatedRecords);
+      }
+      
+      toast({
+        title: "Dados atualizados",
+        description: `Os dados do dia ${editingDay} foram atualizados com sucesso.`,
+      });
+      
+      setEditingDay(null);
+    } catch (error) {
+      console.error('Erro ao salvar dados:', error);
+      toast({
+        title: "Erro ao atualizar dados",
+        description: "Não foi possível atualizar os dados. Tente novamente.",
+        variant: "destructive",
       });
     }
-    
-    setRecords(updatedRecords);
-    
-    toast({
-      title: "Dados atualizados",
-      description: `Os dados do dia ${editingDay} foram atualizados com sucesso.`,
-    });
-    
-    setEditingDay(null);
   };
 
   const handleCancel = () => {
@@ -194,8 +277,30 @@ const RecordsTable = () => {
     const month = currentMonth.getMonth();
     const selectedDate = new Date(year, month, day);
     
+    // Navigate to daily page with the selected date
     navigate('/daily');
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight mb-1">Tabela de Registros</h1>
+          <div className="flex items-center space-x-2">
+            <span className="text-lg font-medium min-w-[140px] text-center">
+              {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+            </span>
+          </div>
+        </div>
+        
+        <div className="rounded-lg border bg-card glass-card hover-glass-card overflow-hidden shadow-md p-8">
+          <div className="flex justify-center">
+            <div className="animate-pulse text-muted-foreground">Carregando registros...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-6">

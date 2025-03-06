@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Save } from 'lucide-react';
@@ -10,6 +10,8 @@ import DatePicker from './DatePicker';
 import TrackingForm from './TrackingForm';
 import MetricsDisplay from './MetricsDisplay';
 import { useTrackingCalculations } from './useTrackingCalculations';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@clerk/clerk-react';
 
 interface TrackingData {
   investment: number;
@@ -21,14 +23,12 @@ interface DailyTrackerProps {
   onDataSubmit?: (date: Date, data: TrackingData) => void;
 }
 
-// Mock storage for daily records
-// In a real app, this would be in a database or global state management
-export const dailyRecords: Record<string, TrackingData> = {};
-
 const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { userId, isSignedIn } = useAuth();
   
   const {
     investment,
@@ -45,24 +45,64 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     roas
   } = useTrackingCalculations();
 
-  // Check if there's already data for this day and pre-fill form
-  React.useEffect(() => {
-    const dateKey = format(date, 'yyyy-MM-dd');
-    if (dailyRecords[dateKey]) {
-      const record = dailyRecords[dateKey];
-      setInvestment(record.investment.toString());
-      setSales(record.sales.toString());
-      setRevenue(record.revenue.toString());
-    } else {
-      // Clear form if no data exists for this day
-      setInvestment('');
-      setSales('');
-      setRevenue('');
-    }
-  }, [date, setInvestment, setSales, setRevenue]);
+  // Fetch data for selected date when date changes or user signs in
+  useEffect(() => {
+    const fetchDailyRecord = async () => {
+      if (!isSignedIn || !userId) return;
+      
+      setIsLoading(true);
+      try {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        
+        const { data, error } = await supabase
+          .from('daily_records')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('date', dateStr)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Erro ao buscar dados:', error);
+          toast({
+            title: "Erro ao carregar dados",
+            description: "Não foi possível buscar os dados para esta data.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (data) {
+          setInvestment(data.investment.toString());
+          setSales(data.sales.toString());
+          setRevenue(data.revenue.toString());
+        } else {
+          // Clear form if no data exists for this day
+          setInvestment('');
+          setSales('');
+          setRevenue('');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar registro diário:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleSubmit = (e: React.FormEvent) => {
+    fetchDailyRecord();
+  }, [date, userId, isSignedIn, setInvestment, setSales, setRevenue, toast]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isSignedIn || !userId) {
+      toast({
+        title: "Usuário não autenticado",
+        description: "Você precisa estar logado para salvar dados.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
 
     // Convert form data
@@ -72,14 +112,28 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
       revenue: revenueValue,
     };
 
-    // Format date as string key for storage
-    const dateKey = format(date, 'yyyy-MM-dd');
+    // Format date as string for Supabase
+    const dateStr = format(date, 'yyyy-MM-dd');
 
-    // Save to our mock storage
-    dailyRecords[dateKey] = data;
+    try {
+      // Upsert the record to Supabase
+      const { error } = await supabase
+        .from('daily_records')
+        .upsert({
+          user_id: userId,
+          date: dateStr,
+          investment: data.investment,
+          sales: data.sales,
+          revenue: data.revenue,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id,date'
+        });
 
-    // Simulate API call
-    setTimeout(() => {
+      if (error) {
+        throw error;
+      }
+      
       if (onDataSubmit) {
         onDataSubmit(date, data);
       }
@@ -89,12 +143,17 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         description: `Registro para ${format(date, 'PPP', { locale: ptBR })} foi salvo.`,
       });
       
+      console.log("Daily record saved to Supabase");
+    } catch (error) {
+      console.error('Erro ao salvar dados:', error);
+      toast({
+        title: "Erro ao salvar dados",
+        description: "Não foi possível salvar os dados. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-      
-      // In a real app, this would trigger a refetch or state update
-      // For this demo, we're using the dailyRecords object directly
-      console.log("Daily records updated:", dailyRecords);
-    }, 500);
+    }
   };
 
   return (
@@ -109,20 +168,28 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <DatePicker date={date} setDate={setDate} />
 
-          <TrackingForm 
-            investment={investment}
-            setInvestment={setInvestment}
-            sales={sales}
-            setSales={setSales}
-            revenue={revenue}
-            setRevenue={setRevenue}
-          />
+          {isLoading ? (
+            <div className="flex justify-center py-6">
+              <div className="animate-pulse text-muted-foreground">Carregando dados...</div>
+            </div>
+          ) : (
+            <>
+              <TrackingForm 
+                investment={investment}
+                setInvestment={setInvestment}
+                sales={sales}
+                setSales={setSales}
+                revenue={revenue}
+                setRevenue={setRevenue}
+              />
 
-          <MetricsDisplay
-            profit={profit}
-            costPerSale={costPerSale}
-            roas={roas}
-          />
+              <MetricsDisplay
+                profit={profit}
+                costPerSale={costPerSale}
+                roas={roas}
+              />
+            </>
+          )}
         </form>
       </CardContent>
       <CardFooter>
@@ -130,7 +197,7 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
           type="submit" 
           onClick={handleSubmit}
           className="w-full"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isLoading}
         >
           <Save className="mr-2 h-5 w-5" />
           {isSubmitting ? "Salvando..." : "Salvar Dados"}

@@ -1,35 +1,9 @@
 
-import { useState, useCallback } from 'react';
-import { format, subDays, startOfDay, endOfDay, differenceInDays } from 'date-fns';
+import { useState, useCallback, useEffect } from 'react';
+import { format, subDays, startOfDay, endOfDay, differenceInDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-export const generateSampleData = (startDate: Date, endDate: Date) => {
-  const data = [];
-  const days = differenceInDays(endDate, startDate) + 1;
-  
-  for (let i = 0; i < days; i++) {
-    const date = new Date(startDate);
-    date.setDate(startDate.getDate() + i);
-    
-    const investment = Math.random() * 300 + 200;
-    const sales = Math.floor(Math.random() * 20) + 5;
-    const revenue = sales * (Math.random() * 100 + 50);
-    const profit = revenue - investment;
-    const roas = revenue / investment;
-    
-    data.push({
-      name: format(date, 'dd/MM', { locale: ptBR }),
-      date: date,
-      investment: investment,
-      revenue: revenue,
-      sales: sales,
-      profit: profit,
-      roas: roas
-    });
-  }
-  
-  return data;
-};
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@clerk/clerk-react';
 
 export const useDashboardData = () => {
   const today = new Date();
@@ -38,34 +12,90 @@ export const useDashboardData = () => {
     from: subDays(today, 7),
     to: today,
   });
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { userId, isSignedIn } = useAuth();
 
-  const getDataForPeriod = useCallback(() => {
-    let startDate;
-    let endDate = endOfDay(today);
-    
-    switch (selectedPeriod) {
-      case 'today':
-        startDate = startOfDay(today);
-        endDate = endOfDay(today);
-        break;
-      case '7d':
-        startDate = startOfDay(subDays(today, 7));
-        break;
-      case '30d':
-        startDate = startOfDay(subDays(today, 30));
-        break;
-      case 'custom':
-        startDate = startOfDay(dateRange.from);
-        endDate = endOfDay(dateRange.to);
-        break;
-      default:
-        startDate = startOfDay(subDays(today, 7));
+  const fetchDataFromSupabase = useCallback(async () => {
+    if (!isSignedIn || !userId) {
+      setIsLoading(false);
+      return [];
     }
-    
-    return generateSampleData(startDate, endDate);
-  }, [selectedPeriod, dateRange, today]);
-  
-  const data = getDataForPeriod();
+
+    try {
+      setIsLoading(true);
+      let startDate;
+      let endDate = endOfDay(today);
+      
+      switch (selectedPeriod) {
+        case 'today':
+          startDate = startOfDay(today);
+          endDate = endOfDay(today);
+          break;
+        case '7d':
+          startDate = startOfDay(subDays(today, 7));
+          break;
+        case '30d':
+          startDate = startOfDay(subDays(today, 30));
+          break;
+        case 'custom':
+          startDate = startOfDay(dateRange.from);
+          endDate = endOfDay(dateRange.to);
+          break;
+        default:
+          startDate = startOfDay(subDays(today, 7));
+      }
+      
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(endDate, 'yyyy-MM-dd');
+      
+      const { data: records, error } = await supabase
+        .from('daily_records')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('date', startDateStr)
+        .lte('date', endDateStr)
+        .order('date', { ascending: true });
+      
+      if (error) {
+        console.error('Erro ao buscar dados do dashboard:', error);
+        setIsLoading(false);
+        return [];
+      }
+      
+      // Transform Supabase data to match the expected format
+      const formattedData = records.map((record: any) => {
+        const recordDate = new Date(record.date);
+        const investment = Number(record.investment);
+        const sales = Number(record.sales);
+        const revenue = Number(record.revenue);
+        const profit = revenue - investment;
+        const roas = investment > 0 ? revenue / investment : 0;
+        
+        return {
+          name: format(recordDate, 'dd/MM', { locale: ptBR }),
+          date: recordDate,
+          investment: investment,
+          revenue: revenue,
+          sales: sales,
+          profit: profit,
+          roas: roas
+        };
+      });
+      
+      setData(formattedData);
+      setIsLoading(false);
+      return formattedData;
+    } catch (error) {
+      console.error('Erro ao buscar dados do dashboard:', error);
+      setIsLoading(false);
+      return [];
+    }
+  }, [selectedPeriod, dateRange, today, userId, isSignedIn]);
+
+  useEffect(() => {
+    fetchDataFromSupabase();
+  }, [fetchDataFromSupabase]);
   
   const calculateSummary = useCallback(() => {
     const totalInvestment = data.reduce((sum, item) => sum + item.investment, 0);
@@ -91,6 +121,7 @@ export const useDashboardData = () => {
     selectedPeriod,
     setSelectedPeriod,
     dateRange,
-    setDateRange
+    setDateRange,
+    isLoading
   };
 };
