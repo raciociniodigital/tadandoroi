@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSupabaseAuth } from '@/providers/SupabaseAuthProvider';
-import { Loader2, Mail, AlertTriangle } from 'lucide-react';
+import { Loader2, Mail, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -17,6 +18,7 @@ export default function Register() {
   const [passwordError, setPasswordError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
   const { signUp, session } = useSupabaseAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -26,6 +28,40 @@ export default function Register() {
     navigate('/daily');
     return null;
   }
+
+  const handleResendConfirmation = async () => {
+    setIsResendingEmail(true);
+    
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+      
+      if (error) {
+        console.error('Erro ao reenviar email:', error);
+        toast({
+          title: "Erro ao reenviar email",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Email de confirmação reenviado",
+          description: `Enviamos um novo email de confirmação para ${email}. Por favor, verifique sua caixa de entrada e spam.`,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao reenviar email:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Não foi possível reenviar o email de confirmação. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResendingEmail(false);
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +77,13 @@ export default function Register() {
     setIsSubmitting(true);
     
     try {
-      const { error } = await signUp(email, password);
+      // Configurando a URL de redirecionamento usando janela atual
+      const { origin } = window.location;
+      const redirectTo = `${origin}/login?confirmed=true`;
+      
+      // Registro com URL de redirecionamento
+      const { error } = await signUp(email, password, redirectTo);
+      
       if (!error) {
         // Cadastro bem-sucedido
         setRegistrationSuccess(true);
@@ -82,13 +124,35 @@ export default function Register() {
                   Enviamos um email de confirmação para <strong>{email}</strong>.
                 </p>
                 <p className="mb-2">
-                  Por favor, <strong>verifique sua caixa de entrada e pasta de spam</strong> e clique no link para ativar sua conta antes de fazer login.
+                  Por favor, <strong>verifique sua caixa de entrada e pasta de spam</strong> e clique no link para ativar sua conta.
                 </p>
                 <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md flex items-start">
                   <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-yellow-800">
-                    Se você não receber o email em alguns minutos, tente fazer login para reenviar o email de confirmação.
-                  </p>
+                  <div className="text-sm text-yellow-800">
+                    <p className="mb-2">
+                      Ao clicar no link de confirmação:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Se estiver no celular, copie o link e abra-o no navegador</li>
+                      <li>Ou abra o link em um computador onde o aplicativo esteja rodando</li>
+                    </ul>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="mt-3 bg-white hover:bg-blue-50 border-blue-200 text-blue-700"
+                      onClick={handleResendConfirmation}
+                      disabled={isResendingEmail}
+                    >
+                      {isResendingEmail ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Reenviando...
+                        </>
+                      ) : (
+                        'Reenviar email de confirmação'
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </AlertDescription>
             </Alert>

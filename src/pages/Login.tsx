@@ -1,12 +1,12 @@
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSupabaseAuth } from '@/providers/SupabaseAuthProvider';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from '@/integrations/supabase/client';
@@ -17,9 +17,23 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
   const { signIn, session } = useSupabaseAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Verifica se o usuário acabou de confirmar o email
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('confirmed') === 'true') {
+      setEmailConfirmed(true);
+      toast({
+        title: "Email confirmado com sucesso!",
+        description: "Seu email foi confirmado. Você já pode fazer login.",
+      });
+    }
+  }, [location, toast]);
 
   // Redireciona se já estiver logado
   if (session) {
@@ -40,9 +54,16 @@ export default function Login() {
     setResendingEmail(true);
     
     try {
+      // Configura URL de redirecionamento
+      const { origin } = window.location;
+      const redirectTo = `${origin}/login?confirmed=true`;
+      
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
+        options: {
+          emailRedirectTo: redirectTo
+        }
       });
       
       if (error) {
@@ -117,6 +138,18 @@ export default function Login() {
             Digite seu e-mail e senha para acessar sua conta
           </CardDescription>
         </CardHeader>
+        
+        {emailConfirmed && (
+          <div className="px-6">
+            <Alert className="mb-4 bg-green-50 border-green-200">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <AlertTitle className="text-green-800 font-medium">Email confirmado com sucesso!</AlertTitle>
+              <AlertDescription className="text-green-700">
+                Sua conta foi ativada. Você já pode fazer login.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
         
         {emailNotConfirmed && (
           <div className="px-6">

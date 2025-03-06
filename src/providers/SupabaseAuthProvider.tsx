@@ -9,7 +9,7 @@ type SupabaseAuthContextType = {
   user: User | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any, user: User | null }>;
+  signUp: (email: string, password: string, redirectTo?: string) => Promise<{ error: any, user: User | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -80,9 +80,19 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Função para registrar-se
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, redirectTo?: string) => {
     setIsLoading(true);
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    
+    const options = {
+      email,
+      password,
+      options: redirectTo ? { emailRedirectTo: redirectTo } : undefined
+    };
+    
+    console.log('Criando usuário com opções:', { ...options, password: '***' });
+    
+    const { data, error } = await supabase.auth.signUp(options);
+    
     setIsLoading(false);
     
     if (error) {
