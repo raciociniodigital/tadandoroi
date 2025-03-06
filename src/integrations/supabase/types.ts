@@ -35,6 +35,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_user: {
+        Args: {
+          user_id_param: string
+          email_param: string
+        }
+        Returns: undefined
+      }
       requesting_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
