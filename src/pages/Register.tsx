@@ -33,29 +33,58 @@ const Register = () => {
             elements: {
               rootBox: "w-full max-w-md mx-auto",
               card: "shadow-lg rounded-lg border border-border bg-card",
-              headerTitle: "text-xl font-semibold text-foreground after:content-['Criar_uma_conta'] after:block empty:hidden",
-              headerSubtitle: "text-muted-foreground after:content-['para_usar_o_TrafficTracker'] after:block empty:hidden",
-              formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground after:content-['Cadastrar'] after:block empty:hidden",
+              headerTitle: "text-xl font-semibold text-foreground empty:hidden",
+              headerSubtitle: "text-muted-foreground empty:hidden",
+              formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
               formFieldLabel: "text-foreground",
-              formFieldLabelEmail: "text-foreground after:content-['Email'] after:block empty:hidden",
-              formFieldLabelPassword: "text-foreground after:content-['Senha'] after:block empty:hidden",
-              formFieldLabelFirstName: "text-foreground after:content-['Nome'] after:block empty:hidden",
-              formFieldLabelLastName: "text-foreground after:content-['Sobrenome'] after:block empty:hidden",
+              formFieldLabelEmail: "text-foreground",
+              formFieldLabelPassword: "text-foreground",
+              formFieldLabelFirstName: "text-foreground",
+              formFieldLabelLastName: "text-foreground",
               formFieldInput: "bg-background border-border text-foreground",
-              footerActionLink: "text-primary hover:underline after:content-['Entrar'] after:block empty:hidden",
+              footerActionLink: "text-primary hover:underline",
               socialButtonsBlockButton: "border border-border",
               socialButtonsBlockButtonText: "text-foreground",
               socialButtonsBlockButtonGoogle: "bg-white text-gray-900 hover:bg-gray-50",
-              footerAction: "after:content-['Já_tem_uma_conta?'] after:inline-block after:mr-1 empty:hidden",
-              dividerText: "after:content-['ou'] after:block empty:hidden",
-              socialButtonsBlockButtonText__google: "after:content-['Continuar_com_Google'] after:block empty:hidden",
-              formFieldInputShowPasswordButton: "after:content-['Mostrar'] after:block empty:hidden",
-              formFieldInputHidePasswordButton: "after:content-['Ocultar'] after:block empty:hidden",
-              formFieldInputEmailAddressInput: "placeholder:text-muted-foreground/70 placeholder:after:content-['Digite_seu_email'] placeholder:after:block placeholder:empty:hidden",
-              formFieldInputPasswordInput: "placeholder:text-muted-foreground/70 placeholder:after:content-['Digite_uma_senha'] placeholder:after:block placeholder:empty:hidden",
-              formFieldInputFirstNameInput: "placeholder:text-muted-foreground/70 placeholder:after:content-['Digite_seu_nome'] placeholder:after:block placeholder:empty:hidden",
-              formFieldInputLastNameInput: "placeholder:text-muted-foreground/70 placeholder:after:content-['Digite_seu_sobrenome'] placeholder:after:block placeholder:empty:hidden",
-              termsPageInner: "after:content-['Ao_clicar_Cadastrar_você_concorda_com_nossos_Termos_de_Serviço_e_Política_de_Privacidade'] after:block empty:hidden"
+              footerAction: "text-foreground",
+              dividerText: "text-muted-foreground",
+              socialButtonsBlockButtonText__google: "text-gray-900",
+              formFieldInputShowPasswordButton: "text-foreground",
+              formFieldInputHidePasswordButton: "text-foreground",
+              formFieldInputEmailAddressInput: "placeholder:text-muted-foreground/70",
+              formFieldInputPasswordInput: "placeholder:text-muted-foreground/70",
+              formFieldInputFirstNameInput: "placeholder:text-muted-foreground/70",
+              formFieldInputLastNameInput: "placeholder:text-muted-foreground/70"
+            },
+            variables: {
+              colorBackground: "white"
+            }
+          }}
+          localization={{
+            signUp: {
+              title: "Criar uma conta",
+              subtitle: "para usar o TrafficTracker",
+              actionText: "Cadastrar",
+              actionLink: "Entrar",
+              formButtonPrimary: "Cadastrar",
+              formFieldLabel__emailAddress: "Email",
+              formFieldLabel__password: "Senha",
+              formFieldLabel__firstName: "Nome",
+              formFieldLabel__lastName: "Sobrenome",
+              formFieldInputPlaceholder__emailAddress: "Digite seu email",
+              formFieldInputPlaceholder__password: "Digite uma senha",
+              formFieldInputPlaceholder__firstName: "Digite seu nome",
+              formFieldInputPlaceholder__lastName: "Digite seu sobrenome",
+              footerActionText: "Já tem uma conta?",
+              footerActionLink: "Entrar",
+              alternativeMethods: {
+                dividerText: "ou",
+                blockButtonText__google: "Continuar com Google",
+                blockButtonText__password: "Continuar com senha",
+              },
+              formFieldInputShowPasswordButton: "Mostrar",
+              formFieldInputHidePasswordButton: "Ocultar",
+              termsPageInner: "Ao clicar Cadastrar você concorda com nossos Termos de Serviço e Política de Privacidade"
             }
           }}
         />
