@@ -13,6 +13,7 @@ import Analytics from "./pages/Analytics";
 import Records from "./pages/Records";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import ClerkSupabaseDebug from "./pages/ClerkSupabaseDebug"; // Add this new import
 import { AuthProvider } from "./providers/AuthProvider";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,13 @@ const App = () => (
                 <SignedIn><Navigate to="/daily" replace /></SignedIn>
                 <SignedOut><Register /></SignedOut>
               </>
+            } />
+
+            {/* Debug route */}
+            <Route path="/debug" element={
+              <ProtectedRoute>
+                <ClerkSupabaseDebug />
+              </ProtectedRoute>
             } />
 
             {/* Rotas protegidas */}

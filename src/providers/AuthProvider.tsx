@@ -13,7 +13,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const { user } = useUser();
   const [isSynced, setIsSynced] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,14 +22,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Function to sync Supabase with Clerk authentication
   const syncSupabase = async (): Promise<boolean> => {
     try {
-      if (!isSignedIn || !user) {
+      if (!isSignedIn || !getToken) {
         return false;
       }
 
       console.log('Syncing Supabase auth...');
       
-      // Get token from Clerk for Supabase
-      const token = await user.getToken({ template: 'supabase' });
+      // Get token from Clerk for Supabase using the correct method
+      const token = await getToken({ template: 'supabase' });
       
       if (!token) {
         console.error('Failed to get Supabase token from Clerk');
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.clearInterval(syncInterval);
       }
     };
-  }, [isSignedIn, isLoaded, user, toast]);
+  }, [isSignedIn, isLoaded, user, toast, getToken]);
 
   return (
     <AuthContext.Provider
