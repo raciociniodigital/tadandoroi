@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
-import { useSignOut } from '@clerk/clerk-react';
+import { useClerk } from '@clerk/clerk-react';
 import { useAuthSync } from '@/hooks/useAuthSync';
 
 interface LayoutProps {
@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
-  const { signOut } = useSignOut();
+  const { signOut } = useClerk();
   const navigate = useNavigate();
   
   // Use o hook de sincronização de autenticação
