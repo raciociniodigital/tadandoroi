@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   BarChart3, 
   Calendar, 
@@ -13,8 +13,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
-import { useClerk } from '@clerk/clerk-react';
-import { useAuthSync } from '@/hooks/useAuthSync';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,28 +22,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
-  const { signOut } = useClerk();
-  const navigate = useNavigate();
   
-  // Use o hook de sincronização de autenticação
-  useAuthSync();
-  
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Logout realizado com sucesso",
-        description: "Você foi desconectado da sua conta",
-      });
-      navigate('/login');
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-      toast({
-        title: "Erro ao fazer logout",
-        description: "Ocorreu um erro ao tentar desconectar da sua conta",
-        variant: "destructive",
-      });
-    }
+  const handleLogout = () => {
+    // Here we'd handle actual logout logic
+    toast({
+      title: "Logged out successfully",
+      description: "You have been logged out of your account",
+    });
   };
 
   const navigation = [
