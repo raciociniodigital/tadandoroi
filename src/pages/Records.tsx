@@ -5,7 +5,9 @@ import RecordsTable from '@/components/records/RecordsTable';
 const Records = () => {
   return (
     <Layout>
-      <RecordsTable />
+      <div className="container mx-auto py-6">
+        <RecordsTable />
+      </div>
     </Layout>
   );
 };

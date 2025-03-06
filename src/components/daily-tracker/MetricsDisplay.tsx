@@ -2,6 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import TrackingMetric from './TrackingMetric';
+import { DollarSign, TrendingUp, Calculator } from 'lucide-react';
 
 interface MetricsDisplayProps {
   profit: number;
@@ -23,15 +24,18 @@ const MetricsDisplay: React.FC<MetricsDisplayProps> = ({ profit, costPerSale, ro
         title="Lucro" 
         value={`R$ ${profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         className={cn(profit >= 0 ? "text-success" : "text-danger")}
+        icon={<DollarSign className={cn("h-5 w-5", profit >= 0 ? "text-success" : "text-danger")} />}
       />
       <TrackingMetric 
         title="Custo por Venda" 
         value={`R$ ${costPerSale.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        icon={<Calculator className="h-5 w-5 text-primary" />}
       />
       <TrackingMetric 
         title="ROAS" 
         value={roas.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         className={getRoasColorClass()}
+        icon={<TrendingUp className={cn("h-5 w-5", getRoasColorClass())} />}
       />
     </div>
   );

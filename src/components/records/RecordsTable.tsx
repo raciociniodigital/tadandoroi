@@ -1,11 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight,
   Edit,
   Save,
-  X
+  X,
+  DollarSign,
+  ShoppingCart,
+  TrendingUp,
+  Percent,
+  Calculator,
+  Calendar
 } from 'lucide-react';
 import { format, addMonths, subMonths, getDaysInMonth, startOfMonth, getMonth, getYear, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -39,7 +44,6 @@ const RecordsTable = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Load records from our storage
   useEffect(() => {
     const loadedRecords: DailyRecord[] = [];
     
@@ -66,13 +70,11 @@ const RecordsTable = () => {
   const daysInMonth = getDaysInMonth(currentMonth);
   const startDay = startOfMonth(currentMonth);
   
-  // Filter records for the current month
   const currentMonthRecords = records.filter((record) => 
     getMonth(record.date) === getMonth(currentMonth) && 
     getYear(record.date) === getYear(currentMonth)
   );
   
-  // Calculate metrics for each day
   const daysData = Array.from({ length: daysInMonth }).map((_, index) => {
     const day = index + 1;
     const record = currentMonthRecords.find((r) => r.date.getDate() === day);
@@ -107,12 +109,17 @@ const RecordsTable = () => {
     };
   });
   
-  // Get ROAS color class
   const getRoasColorClass = (roas: number | null) => {
     if (roas === null) return '';
-    if (roas <= 1) return 'text-red-500';
-    if (roas <= 1.5) return 'text-yellow-500';
-    return 'text-green-500';
+    if (roas <= 1) return 'text-danger';
+    if (roas <= 1.5) return 'text-warning';
+    return 'text-success';
+  };
+
+  const getProfitColorClass = (profit: number | null) => {
+    if (profit === null) return '';
+    if (profit < 0) return 'text-danger';
+    return 'text-success';
   };
 
   const handleEdit = (day: number, dayData: any) => {
@@ -132,14 +139,12 @@ const RecordsTable = () => {
     const dateToEdit = new Date(year, month, editingDay);
     const dateKey = format(dateToEdit, 'yyyy-MM-dd');
     
-    // Update the dailyRecords
     dailyRecords[dateKey] = {
       investment: parseFloat(editData.investment) || 0,
       sales: parseInt(editData.sales) || 0,
       revenue: parseFloat(editData.revenue) || 0
     };
     
-    // Update local records
     const updatedRecords = [...records];
     const existingIndex = updatedRecords.findIndex(r => 
       r.date.getDate() === editingDay && 
@@ -185,16 +190,11 @@ const RecordsTable = () => {
   };
 
   const handleAddNew = (day: number) => {
-    // Navigate to the daily tracking page with the selected date
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const selectedDate = new Date(year, month, day);
     
-    // In a real app, we would pass the date through state management or URL
-    // For this demo, we'll just navigate to the page
     navigate('/daily');
-    
-    // Alternatively, you could open a dialog/modal to add data directly
   };
 
   return (
@@ -224,17 +224,47 @@ const RecordsTable = () => {
         </div>
       </div>
       
-      <div className="rounded-lg border bg-card overflow-hidden shadow-sm">
+      <div className="rounded-lg border bg-card glass-card hover-glass-card overflow-hidden shadow-md">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse records-table">
             <thead>
               <tr className="bg-muted/50">
-                <th className="py-3 px-4 text-left font-medium border-r">Dia</th>
-                <th className="py-3 px-4 text-right font-medium border-r">Investimento (R$)</th>
-                <th className="py-3 px-4 text-right font-medium border-r">Vendas</th>
-                <th className="py-3 px-4 text-right font-medium border-r">Custo/Venda (R$)</th>
-                <th className="py-3 px-4 text-right font-medium border-r">Lucro (R$)</th>
-                <th className="py-3 px-4 text-right font-medium border-r">ROAS</th>
+                <th className="py-3 px-4 text-left font-medium border-r">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span>Dia</span>
+                  </div>
+                </th>
+                <th className="py-3 px-4 text-left font-medium border-r">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-primary" />
+                    <span>Investimento (R$)</span>
+                  </div>
+                </th>
+                <th className="py-3 px-4 text-left font-medium border-r">
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
+                    <span>Vendas</span>
+                  </div>
+                </th>
+                <th className="py-3 px-4 text-left font-medium border-r">
+                  <div className="flex items-center gap-2">
+                    <Calculator className="h-4 w-4 text-primary" />
+                    <span>Custo/Venda (R$)</span>
+                  </div>
+                </th>
+                <th className="py-3 px-4 text-left font-medium border-r">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-success" />
+                    <span>Lucro (R$)</span>
+                  </div>
+                </th>
+                <th className="py-3 px-4 text-left font-medium border-r">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <span>ROAS</span>
+                  </div>
+                </th>
                 <th className="py-3 px-4 text-center font-medium">Ações</th>
               </tr>
             </thead>
@@ -256,7 +286,7 @@ const RecordsTable = () => {
                           type="number"
                           value={editData.investment}
                           onChange={(e) => handleInputChange('investment', e.target.value)}
-                          className="w-24 text-right"
+                          className="w-full"
                         />
                       </td>
                       <td className="py-3 px-4 border-r">
@@ -264,19 +294,19 @@ const RecordsTable = () => {
                           type="number"
                           value={editData.sales}
                           onChange={(e) => handleInputChange('sales', e.target.value)}
-                          className="w-20 text-right"
+                          className="w-full"
                         />
                       </td>
-                      <td className="py-3 px-4 border-r text-right">
+                      <td className="py-3 px-4 border-r">
                         <Input
                           type="number"
                           value={editData.revenue}
                           onChange={(e) => handleInputChange('revenue', e.target.value)}
-                          className="w-24 text-right"
+                          className="w-full"
                         />
                       </td>
-                      <td className="py-3 px-4 border-r text-right">-</td>
-                      <td className="py-3 px-4 border-r text-right">-</td>
+                      <td className="py-3 px-4 border-r">-</td>
+                      <td className="py-3 px-4 border-r">-</td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center space-x-2">
                           <Button 
@@ -300,25 +330,25 @@ const RecordsTable = () => {
                     </>
                   ) : (
                     <>
-                      <td className="py-3 px-4 text-right border-r">
+                      <td className="py-3 px-4 text-left border-r">
                         {day.investment !== null 
                           ? day.investment.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
                           : '-'}
                       </td>
-                      <td className="py-3 px-4 text-right border-r">
+                      <td className="py-3 px-4 text-left border-r">
                         {day.sales !== null ? day.sales : '-'}
                       </td>
-                      <td className="py-3 px-4 text-right border-r">
+                      <td className="py-3 px-4 text-left border-r">
                         {day.costPerSale !== null 
                           ? day.costPerSale.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
                           : '-'}
                       </td>
-                      <td className={cn("py-3 px-4 text-right border-r", day.profit && day.profit < 0 ? "text-red-500" : "")}>
+                      <td className={cn("py-3 px-4 text-left border-r", getProfitColorClass(day.profit))}>
                         {day.profit !== null 
                           ? day.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
                           : '-'}
                       </td>
-                      <td className={cn("py-3 px-4 text-right border-r", getRoasColorClass(day.roas))}>
+                      <td className={cn("py-3 px-4 text-left border-r font-medium", getRoasColorClass(day.roas))}>
                         {day.roas !== null 
                           ? day.roas.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
                           : '-'}
@@ -329,6 +359,7 @@ const RecordsTable = () => {
                             size="sm" 
                             variant="ghost" 
                             onClick={() => handleEdit(day.day, day)}
+                            className="hover:bg-primary/10 hover:text-primary transition-colors"
                           >
                             <Edit className="h-4 w-4 mr-1" />
                             Editar
@@ -338,8 +369,9 @@ const RecordsTable = () => {
                             size="sm" 
                             variant="ghost" 
                             onClick={() => handleAddNew(day.day)}
+                            className="hover:bg-primary/10 hover:text-primary transition-colors"
                           >
-                            <Edit className="h-4 w-4 mr-1" />
+                            <DollarSign className="h-4 w-4 mr-1" />
                             Adicionar
                           </Button>
                         )}
