@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { useClerk, useAuth } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/clerk-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuthSync } from '@/hooks/useAuthSync';
@@ -11,7 +11,6 @@ interface AuthSyncProps {
 
 const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
   const { isSignedIn, isLoaded } = useAuth();
-  const { signOut } = useClerk();
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
