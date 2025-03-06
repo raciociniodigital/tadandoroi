@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
+import { SupabaseAuthProvider } from "./providers/SupabaseAuthProvider";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -13,19 +13,18 @@ import Analytics from "./pages/Analytics";
 import Records from "./pages/Records";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
-import ClerkSupabaseDebug from "./pages/ClerkSupabaseDebug"; // Add this new import
-import { AuthProvider } from "./providers/AuthProvider";
+import { useSupabaseAuth } from "./providers/SupabaseAuthProvider";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { session, isLoading } = useSupabaseAuth();
   
-  if (!isLoaded) {
+  if (isLoading) {
     return <div className="flex h-screen w-full items-center justify-center">Carregando...</div>;
   }
   
-  if (!isSignedIn) {
+  if (!session) {
     return <Navigate to="/login" />;
   }
   
@@ -38,32 +37,14 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
+        <SupabaseAuthProvider>
           <Routes>
             {/* Rotas públicas */}
             <Route path="/" element={<Index />} />
             
             {/* Auth routes */}
-            <Route path="/login" element={
-              <>
-                <SignedIn><Navigate to="/daily" replace /></SignedIn>
-                <SignedOut><Login /></SignedOut>
-              </>
-            } />
-            
-            <Route path="/register" element={
-              <>
-                <SignedIn><Navigate to="/daily" replace /></SignedIn>
-                <SignedOut><Register /></SignedOut>
-              </>
-            } />
-
-            {/* Debug route */}
-            <Route path="/debug" element={
-              <ProtectedRoute>
-                <ClerkSupabaseDebug />
-              </ProtectedRoute>
-            } />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
             {/* Rotas protegidas */}
             <Route path="/daily" element={
@@ -93,7 +74,7 @@ const App = () => (
             {/* Rota para todas as outras páginas */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AuthProvider>
+        </SupabaseAuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
