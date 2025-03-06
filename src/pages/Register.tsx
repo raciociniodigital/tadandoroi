@@ -1,5 +1,5 @@
 
-import { RegisterForm } from '@/components/auth/AuthForms';
+import { RegisterForm } from '@/components/auth';
 
 const Register = () => {
   return (
