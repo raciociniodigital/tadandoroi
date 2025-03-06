@@ -26,8 +26,41 @@ const App = () => (
         <Routes>
           {/* Rotas públicas */}
           <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          
+          {/* Auth routes */}
+          <Route 
+            path="/login" 
+            element={
+              <SignedIn>
+                <Navigate to="/daily" replace />
+              </SignedIn>
+            }
+          />
+          <Route 
+            path="/login" 
+            element={
+              <SignedOut>
+                <Login />
+              </SignedOut>
+            }
+          />
+          
+          <Route 
+            path="/register" 
+            element={
+              <SignedIn>
+                <Navigate to="/daily" replace />
+              </SignedIn>
+            }
+          />
+          <Route 
+            path="/register" 
+            element={
+              <SignedOut>
+                <Register />
+              </SignedOut>
+            }
+          />
 
           {/* Rotas protegidas */}
           <Route 
@@ -63,7 +96,7 @@ const App = () => (
             } 
           />
           
-          {/* Redirecionar para a página principal se estiver logado e acessar rotas públicas */}
+          {/* Redirecionar para a página principal se estiver logado */}
           <Route 
             path="/signin" 
             element={

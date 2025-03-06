@@ -19,6 +19,8 @@ const AuthSync: React.FC<AuthSyncProps> = ({ children }) => {
   useAuthSync();
 
   useEffect(() => {
+    console.log("AuthSync: isSignedIn =", isSignedIn, "isLoaded =", isLoaded);
+    
     if (isLoaded && !isSignedIn) {
       toast({
         title: "Acesso não autorizado",
