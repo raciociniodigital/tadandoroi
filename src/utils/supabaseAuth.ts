@@ -2,6 +2,18 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@clerk/clerk-react';
 
+// Declaração global para o tipo do Clerk na janela
+declare global {
+  interface Window {
+    Clerk?: {
+      session?: {
+        id?: string;
+        getToken: (options: { template: string }) => Promise<string>;
+      };
+    };
+  }
+}
+
 /**
  * Sincroniza a autenticação entre Clerk e Supabase
  * Retorna true se for bem-sucedido, false caso contrário
@@ -119,15 +131,3 @@ export const useSupabaseToken = () => {
   
   return { getSupabaseToken };
 };
-
-// Adicionar tipo para o Clerk na janela
-declare global {
-  interface Window {
-    Clerk?: {
-      session?: {
-        id?: string;
-        getToken: (options: { template: string }) => Promise<string>;
-      };
-    };
-  }
-}
