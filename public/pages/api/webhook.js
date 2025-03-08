@@ -9,20 +9,26 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Método não permitido' });
   }
 
-  const data = req.body; // Dados enviados pela Hotmart
-  const email = data.buyer_email; // Email do comprador
-  const status = data.status; // Status do pagamento (ex: "approved")
-  const plano = data.product_name.includes('Mensal') ? 'mensal' : 'anual'; // Detecta o plano
+  const data = req.body;
+  console.log('Dados recebidos:', data); // Adiciona log para depuração
+
+  const email = data.buyer_email || data.buyerEmail || data.email; // Tenta diferentes nomes
+  const status = data.status || data.transaction_status;
+  const productName = data.product_name || data.productName || data.product;
+
+  if (!email || !status || !productName) {
+    return res.status(400).json({ message: 'Dados insuficientes no corpo da requisição' });
+  }
+
+  const plano = productName.includes('Mensal') ? 'mensal' : 'anual';
 
   // Atualiza o status da assinatura no Supabase
   const { error } = await supabase
-    .from('usuarios') // Nome da tabela no Supabase
-    .update({
-      assinatura_ativa: status === 'approved',
-      plano: plano,
-      ultima_atualizacao: new Date().toISOString(),
-    })
-    .eq('email', email);
+    .from('usuarios')
+    .upsert(
+      { email, assinatura_ativa: status === 'approved', plano, ultima_atualizacao: new Date().toISOString() },
+      { onConflict: 'email' }
+    );
 
   if (error) {
     console.error('Erro ao atualizar Supabase:', error);
