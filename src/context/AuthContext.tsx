@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -33,25 +32,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const { toast } = useToast();
 
-  // Pages that don't require subscription
   const publicPages = ['/', '/login', '/register', '/plans'];
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage)
     const checkAuth = async () => {
       const storedUser = localStorage.getItem("user");
       
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
         
-        // Check subscription status
         if (parsedUser.id) {
           const subscriptionStatus = await checkSubscriptionStatus(parsedUser.id);
           parsedUser.subscription = subscriptionStatus;
           
           setUser(parsedUser);
           
-          // If not on a public page and subscription is not active, redirect to plans
           const isPublicPage = publicPages.some(page => location.pathname === page);
           if (!isPublicPage && !subscriptionStatus.isActive) {
             navigate('/plans');
@@ -75,7 +70,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     const subscriptionStatus = await checkSubscriptionStatus(user.id);
     
-    // Update user with latest subscription status
     const updatedUser = { ...user, subscription: subscriptionStatus };
     setUser(updatedUser);
     localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -86,13 +80,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      // Simulate API call for login
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // For a real implementation, this would be replaced with an actual API call
-      const mockUser = { id: "123", email };
+      const mockUser: User = { 
+        id: "123", 
+        email 
+      };
       
-      // Check subscription status
       const subscriptionStatus = await checkSubscriptionStatus(mockUser.id);
       mockUser.subscription = subscriptionStatus;
       
@@ -104,7 +98,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Bem-vindo de volta ao Tá Dando ROI!",
       });
       
-      // Redirect based on subscription status
       if (subscriptionStatus.isActive) {
         navigate("/daily");
       } else {
@@ -129,13 +122,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (name: string, email: string, password: string) => {
     try {
       setIsLoading(true);
-      // Simulate API call for registration
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // For a real implementation, this would be replaced with an actual API call
-      const mockUser = { id: "123", email, name };
+      const mockUser: User = { 
+        id: "123", 
+        email, 
+        name 
+      };
       
-      // Initialize with inactive subscription
       const subscriptionStatus = { isActive: false };
       mockUser.subscription = subscriptionStatus;
       
@@ -147,7 +141,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Bem-vindo ao Tá Dando ROI!",
       });
       
-      // Redirect to plans page to choose a subscription
       navigate("/plans");
     } catch (error) {
       toast({
@@ -164,7 +157,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       setIsLoading(true);
-      // Clear user from state and localStorage
       setUser(null);
       localStorage.removeItem("user");
       
