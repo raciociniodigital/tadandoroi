@@ -1,4 +1,4 @@
-
+export const dynamic = "force-dynamic";
 import Layout from '@/components/Layout';
 import RecordsTable from '@/components/records/RecordsTable';
 
