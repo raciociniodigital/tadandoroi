@@ -14,10 +14,9 @@ export default async function handler(req, res) {
 
   let email, status, productName;
 
-  // Determinar o email e status com base no evento
   if (data.event === 'SUBSCRIPTION_CANCELLATION') {
     email = data.data?.subscriber?.email;
-    status = 'canceled'; // Inferido do evento
+    status = 'canceled';
     productName = data.data?.product?.name;
   } else {
     email = data.data?.buyer?.email;
@@ -33,7 +32,6 @@ export default async function handler(req, res) {
   const plano = productName.includes('Mensal') ? 'mensal' : 'anual';
   const isActive = status === 'approved';
 
-  // Atualiza ou insere no Supabase
   const { error } = await supabase
     .from('usuarios')
     .upsert(
