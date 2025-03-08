@@ -10,23 +10,34 @@ export default async function handler(req, res) {
   }
 
   const data = req.body;
-  console.log('Dados recebidos:', data); // Adiciona log para depuração
+  console.log('Dados recebidos:', JSON.stringify(data, null, 2));
 
-  const email = data.buyer_email || data.buyerEmail || data.email; // Tenta diferentes nomes
-  const status = data.status || data.transaction_status;
-  const productName = data.product_name || data.productName || data.product;
+  let email, status, productName;
+
+  // Determinar o email e status com base no evento
+  if (data.event === 'SUBSCRIPTION_CANCELLATION') {
+    email = data.data?.subscriber?.email;
+    status = 'canceled'; // Inferido do evento
+    productName = data.data?.product?.name;
+  } else {
+    email = data.data?.buyer?.email;
+    status = data.data?.purchase?.status?.toLowerCase();
+    productName = data.data?.product?.name;
+  }
 
   if (!email || !status || !productName) {
+    console.log('Campos obrigatórios ausentes:', { email, status, productName });
     return res.status(400).json({ message: 'Dados insuficientes no corpo da requisição' });
   }
 
   const plano = productName.includes('Mensal') ? 'mensal' : 'anual';
+  const isActive = status === 'approved';
 
-  // Atualiza o status da assinatura no Supabase
+  // Atualiza ou insere no Supabase
   const { error } = await supabase
     .from('usuarios')
     .upsert(
-      { email, assinatura_ativa: status === 'approved', plano, ultima_atualizacao: new Date().toISOString() },
+      { email, assinatura_ativa: isActive, plano, ultima_atualizacao: new Date().toISOString() },
       { onConflict: 'email' }
     );
 
