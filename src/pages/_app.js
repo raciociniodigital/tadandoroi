@@ -1,4 +1,5 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
+// Pequena mudança para forçar um novo deploy
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
