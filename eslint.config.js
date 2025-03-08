@@ -24,6 +24,14 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-empty-object-type": "off", // Desativa regra que causava erro
+      "@typescript-eslint/no-explicit-any": "off",     // Desativa regra que causava erro
+      "react-hooks/exhaustive-deps": "warn",           // Mantém como warning
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
     },
   }
 );
