@@ -18,9 +18,9 @@ const Hero = () => {
           Plataforma completa para monitorar, analisar e otimizar seus gastos com tráfego pago, ajudando a tomar decisões baseadas em dados.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
-          <Link to="/register">
+          <Link to="/plans">
             <Button size="lg" className="gap-2">
-              Começar Agora <ArrowRight className="h-4 w-4" />
+              Ver Planos <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
           <Link to="/login">

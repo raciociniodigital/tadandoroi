@@ -15,9 +15,9 @@ const CallToAction = () => {
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Comece hoje mesmo a monitorar e melhorar o desempenho do seu investimento em tráfego.
           </p>
-          <Link to="/register">
+          <Link to="/plans">
             <Button size="lg" className="gap-2">
-              Criar Minha Conta <ArrowRight className="h-4 w-4" />
+              Ver Planos <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>

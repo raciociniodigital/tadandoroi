@@ -8,12 +8,14 @@ import {
   ChevronRight, 
   FileSpreadsheet,
   LogOut, 
-  User
+  User,
+  BadgeCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { Badge } from '@/components/ui/badge';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,13 +25,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   
   const handleLogout = () => {
     logout();
     toast({
-      title: "Logged out successfully",
-      description: "You have been logged out of your account",
+      title: "Logout realizado",
+      description: "Você saiu da sua conta",
     });
   };
 
@@ -59,6 +61,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       active: location.pathname === '/profile',
     }
   ];
+
+  // Get plan type text
+  const getPlanText = () => {
+    if (!user?.subscription?.planType) return null;
+    
+    return user.subscription.planType === 'monthly' 
+      ? 'Plano Mensal'
+      : 'Plano Anual';
+  };
+
+  const planText = getPlanText();
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -91,6 +104,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
               </Button>
             </div>
+
+            {/* Subscription status */}
+            {!collapsed && planText && (
+              <div className="mb-4 px-2">
+                <Badge variant="outline" className="flex items-center gap-1 w-full justify-center py-1">
+                  <BadgeCheck className="h-4 w-4 text-primary" />
+                  {planText}
+                </Badge>
+              </div>
+            )}
 
             {/* Navigation */}
             <nav className="space-y-1.5">

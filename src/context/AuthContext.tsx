@@ -1,12 +1,18 @@
 
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { 
+  checkSubscriptionStatus, 
+  SubscriptionStatus, 
+  updateSubscriptionStatus 
+} from "@/services/subscriptionService";
 
 type User = {
   id: string;
   email: string;
   name?: string;
+  subscription?: SubscriptionStatus;
 };
 
 type AuthContextType = {
@@ -15,6 +21,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  verifySubscription: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,16 +30,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Pages that don't require subscription
+  const publicPages = ['/', '/login', '/register', '/plans'];
 
   useEffect(() => {
     // Check if user is already logged in (from localStorage)
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
-  }, []);
+    const checkAuth = async () => {
+      const storedUser = localStorage.getItem("user");
+      
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        
+        // Check subscription status
+        if (parsedUser.id) {
+          const subscriptionStatus = await checkSubscriptionStatus(parsedUser.id);
+          parsedUser.subscription = subscriptionStatus;
+          
+          setUser(parsedUser);
+          
+          // If not on a public page and subscription is not active, redirect to plans
+          const isPublicPage = publicPages.some(page => location.pathname === page);
+          if (!isPublicPage && !subscriptionStatus.isActive) {
+            navigate('/plans');
+            toast({
+              title: "Assinatura necessária",
+              description: "Você precisa de uma assinatura ativa para acessar esta área.",
+              variant: "destructive",
+            });
+          }
+        }
+      }
+      
+      setIsLoading(false);
+    };
+    
+    checkAuth();
+  }, [location.pathname, navigate, toast]);
+
+  const verifySubscription = async (): Promise<boolean> => {
+    if (!user) return false;
+    
+    const subscriptionStatus = await checkSubscriptionStatus(user.id);
+    
+    // Update user with latest subscription status
+    const updatedUser = { ...user, subscription: subscriptionStatus };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    
+    return subscriptionStatus.isActive;
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -42,15 +91,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // For a real implementation, this would be replaced with an actual API call
       const mockUser = { id: "123", email };
+      
+      // Check subscription status
+      const subscriptionStatus = await checkSubscriptionStatus(mockUser.id);
+      mockUser.subscription = subscriptionStatus;
+      
       setUser(mockUser);
       localStorage.setItem("user", JSON.stringify(mockUser));
       
       toast({
         title: "Login bem-sucedido",
-        description: "Bem-vindo de volta ao TrafficTracker!",
+        description: "Bem-vindo de volta ao Tá Dando ROI!",
       });
       
-      navigate("/daily");
+      // Redirect based on subscription status
+      if (subscriptionStatus.isActive) {
+        navigate("/daily");
+      } else {
+        navigate("/plans");
+        toast({
+          title: "Assinatura necessária",
+          description: "Você precisa de uma assinatura ativa para acessar todas as funcionalidades.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Erro no login",
@@ -71,15 +134,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // For a real implementation, this would be replaced with an actual API call
       const mockUser = { id: "123", email, name };
+      
+      // Initialize with inactive subscription
+      const subscriptionStatus = { isActive: false };
+      mockUser.subscription = subscriptionStatus;
+      
       setUser(mockUser);
       localStorage.setItem("user", JSON.stringify(mockUser));
       
       toast({
         title: "Conta criada com sucesso",
-        description: "Bem-vindo ao TrafficTracker!",
+        description: "Bem-vindo ao Tá Dando ROI!",
       });
       
-      navigate("/daily");
+      // Redirect to plans page to choose a subscription
+      navigate("/plans");
     } catch (error) {
       toast({
         title: "Erro no cadastro",
@@ -113,7 +182,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, verifySubscription }}>
       {children}
     </AuthContext.Provider>
   );
