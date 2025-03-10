@@ -25,7 +25,7 @@ export const LoginForm = () => {
       setIsLoading(false);
       toast({
         title: "Login bem-sucedido",
-        description: "Bem-vindo de volta ao Traffic Tracker!",
+        description: "Bem-vindo de volta ao Tá Dando ROI!",
       });
       navigate('/daily');
     }, 1500);
@@ -103,9 +103,9 @@ export const LoginForm = () => {
         </Button>
         
         <div className="text-center text-sm">
-          Não tem uma conta?{" "}
-          <Link to="/register" className="text-primary hover:underline">
-            Cadastre-se
+          Não tem acesso?{" "}
+          <Link to="/" className="text-primary hover:underline">
+            Escolha um plano
           </Link>
         </div>
       </form>

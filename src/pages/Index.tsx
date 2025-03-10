@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart, Calendar, LineChart, Lock, TrendingUp } from 'lucide-react';
@@ -32,7 +33,7 @@ const Index = () => {
         <div className="container mx-auto flex items-center justify-between p-4">
           <div className="flex items-center">
             <h1 className="text-2xl font-bold tracking-tight text-gradient">
-              Tá Dando<span className="text-foreground">ROI</span>
+              Tá Dando <span className="text-foreground">ROI</span>
             </h1>
           </div>
           <div className="flex items-center space-x-4">

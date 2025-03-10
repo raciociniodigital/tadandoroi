@@ -6,7 +6,7 @@ const Login = () => {
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background px-4">
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-gradient">
-          Tá Dando<span className="text-foreground">ROI</span>
+          Tá Dando <span className="text-foreground">ROI</span>
         </h1>
         <p className="mt-2 text-muted-foreground">
           Acompanhe seus investimentos em tráfego e maximize seus resultados
