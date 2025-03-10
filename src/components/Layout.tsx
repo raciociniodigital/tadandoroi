@@ -76,7 +76,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   to="/" 
                   className="text-2xl font-bold tracking-tight text-gradient"
                 >
-                  Traffic<span className="text-foreground">Tracker</span>
+                  Tá Dando<span className="text-foreground">ROI</span>
                 </Link>
               )}
               <Button

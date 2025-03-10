@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart, Calendar, LineChart, Lock, TrendingUp } from 'lucide-react';
@@ -33,15 +32,12 @@ const Index = () => {
         <div className="container mx-auto flex items-center justify-between p-4">
           <div className="flex items-center">
             <h1 className="text-2xl font-bold tracking-tight text-gradient">
-              Traffic<span className="text-foreground">Tracker</span>
+              Tá Dando<span className="text-foreground">ROI</span>
             </h1>
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/login">
-              <Button variant="ghost">Login</Button>
-            </Link>
-            <Link to="/register">
-              <Button>Cadastre-se</Button>
+              <Button>Login</Button>
             </Link>
           </div>
         </div>
@@ -60,13 +56,8 @@ const Index = () => {
             Plataforma completa para monitorar, analisar e otimizar seus gastos com tráfego pago, ajudando a tomar decisões baseadas em dados.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/register">
-              <Button size="lg" className="gap-2">
-                Começar Agora <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
             <Link to="/login">
-              <Button size="lg" variant="outline" className="gap-2">
+              <Button size="lg" className="gap-2">
                 <Lock className="h-4 w-4" /> Fazer Login
               </Button>
             </Link>
@@ -148,9 +139,9 @@ const Index = () => {
             <div className="glass-card hover-glass-card p-6 rounded-xl animate-fade-up animation-delay-600 bg-primary/5 border border-primary/20">
               <h3 className="text-xl font-semibold mb-2">E muito mais...</h3>
               <p className="text-muted-foreground mb-4">Descubra todos os recursos que preparamos para ajudar no seu crescimento.</p>
-              <Link to="/register">
+              <Link to="/login">
                 <Button variant="outline" className="w-full">
-                  Comece a Usar Agora
+                  Faça Login Agora
                 </Button>
               </Link>
             </div>
@@ -168,9 +159,9 @@ const Index = () => {
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Comece hoje mesmo a monitorar e melhorar o desempenho do seu investimento em tráfego.
             </p>
-            <Link to="/register">
+            <Link to="/login">
               <Button size="lg" className="gap-2">
-                Criar Minha Conta <ArrowRight className="h-4 w-4" />
+                Fazer Login <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -182,7 +173,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-muted-foreground">
-              © {new Date().getFullYear()} TrafficTracker. Todos os direitos reservados.
+              © {new Date().getFullYear()} Tá Dando ROI. Todos os direitos reservados.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
