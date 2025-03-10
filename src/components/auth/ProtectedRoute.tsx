@@ -18,6 +18,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     const checkSubscription = async () => {
       if (user) {
+        // Se o usuário for admin, concede acesso imediatamente
+        if (user.isAdmin) {
+          setHasSubscription(true);
+          setChecking(false);
+          return;
+        }
+        
         const isActive = await verifySubscription();
         setHasSubscription(isActive);
       } else {

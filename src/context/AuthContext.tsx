@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -12,6 +13,7 @@ type User = {
   email: string;
   name?: string;
   subscription?: SubscriptionStatus;
+  isAdmin?: boolean;
 };
 
 type AuthContextType = {
@@ -42,6 +44,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const parsedUser = JSON.parse(storedUser);
         
         if (parsedUser.id) {
+          // Se o usuário for admin, não precisa verificar assinatura
+          if (parsedUser.isAdmin) {
+            setUser(parsedUser);
+            setIsLoading(false);
+            return;
+          }
+
           const subscriptionStatus = await checkSubscriptionStatus(parsedUser.id);
           parsedUser.subscription = subscriptionStatus;
           
@@ -68,6 +77,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const verifySubscription = async (): Promise<boolean> => {
     if (!user) return false;
     
+    // Se o usuário for admin, sempre retorna true
+    if (user.isAdmin) return true;
+    
     const subscriptionStatus = await checkSubscriptionStatus(user.id);
     
     const updatedUser = { ...user, subscription: subscriptionStatus };
@@ -82,6 +94,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Verificar se é o usuário administrador
+      if (email === "admin@teste.com" && password === "admin123") {
+        const adminUser: User = { 
+          id: "admin123", 
+          email: "admin@teste.com",
+          name: "Administrador",
+          isAdmin: true,
+          subscription: { isActive: true, planType: "annual", expiresAt: "2099-12-31T23:59:59Z" }
+        };
+        
+        setUser(adminUser);
+        localStorage.setItem("user", JSON.stringify(adminUser));
+        
+        toast({
+          title: "Login administrativo",
+          description: "Bem-vindo(a) ao painel administrativo!",
+        });
+        
+        navigate("/daily");
+        return;
+      }
+      
+      // Usuário normal
       const mockUser: User = { 
         id: "123", 
         email 
