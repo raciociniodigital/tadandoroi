@@ -1,8 +1,35 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { format, subDays, startOfDay, endOfDay, differenceInDays, parseISO, isWithinInterval } from 'date-fns';
+import { useState, useCallback } from 'react';
+import { format, subDays, startOfDay, endOfDay, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAllRecords, TrackingData } from '@/services/trackingService';
+
+export const generateSampleData = (startDate: Date, endDate: Date) => {
+  const data = [];
+  const days = differenceInDays(endDate, startDate) + 1;
+  
+  for (let i = 0; i < days; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    
+    const investment = Math.random() * 300 + 200;
+    const sales = Math.floor(Math.random() * 20) + 5;
+    const revenue = sales * (Math.random() * 100 + 50);
+    const profit = revenue - investment;
+    const roas = revenue / investment;
+    
+    data.push({
+      name: format(date, 'dd/MM', { locale: ptBR }),
+      date: date,
+      investment: investment,
+      revenue: revenue,
+      sales: sales,
+      profit: profit,
+      roas: roas
+    });
+  }
+  
+  return data;
+};
 
 export const useDashboardData = () => {
   const today = new Date();
@@ -11,7 +38,6 @@ export const useDashboardData = () => {
     from: subDays(today, 7),
     to: today,
   });
-  const [data, setData] = useState<any[]>([]);
 
   const getDataForPeriod = useCallback(() => {
     let startDate;
@@ -36,54 +62,12 @@ export const useDashboardData = () => {
         startDate = startOfDay(subDays(today, 7));
     }
     
-    // Buscar registros do armazenamento
-    const allRecords = getAllRecords();
-    const filteredData: any[] = [];
-    
-    Object.entries(allRecords).forEach(([dateStr, record]) => {
-      const recordDate = parseISO(dateStr);
-      
-      if (isWithinInterval(recordDate, { start: startDate, end: endDate })) {
-        const investment = record.investment;
-        const sales = record.sales;
-        const revenue = record.revenue;
-        const profit = revenue - investment;
-        const roas = investment > 0 ? revenue / investment : 0;
-        
-        filteredData.push({
-          name: format(recordDate, 'dd/MM', { locale: ptBR }),
-          date: recordDate,
-          investment: investment,
-          revenue: revenue,
-          sales: sales,
-          profit: profit,
-          roas: roas
-        });
-      }
-    });
-    
-    // Ordenar por data
-    filteredData.sort((a, b) => a.date.getTime() - b.date.getTime());
-    
-    return filteredData;
+    return generateSampleData(startDate, endDate);
   }, [selectedPeriod, dateRange, today]);
   
-  useEffect(() => {
-    const filteredData = getDataForPeriod();
-    setData(filteredData);
-  }, [getDataForPeriod]);
+  const data = getDataForPeriod();
   
   const calculateSummary = useCallback(() => {
-    if (data.length === 0) {
-      return {
-        investment: "0.00",
-        revenue: "0.00",
-        sales: 0,
-        profit: "0.00",
-        roas: "0.00"
-      };
-    }
-    
     const totalInvestment = data.reduce((sum, item) => sum + item.investment, 0);
     const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
     const totalSales = data.reduce((sum, item) => sum + item.sales, 0);

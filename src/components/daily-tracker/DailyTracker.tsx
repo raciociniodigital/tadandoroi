@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Save } from 'lucide-react';
@@ -10,18 +10,25 @@ import DatePicker from './DatePicker';
 import TrackingForm from './TrackingForm';
 import MetricsDisplay from './MetricsDisplay';
 import { useTrackingCalculations } from './useTrackingCalculations';
-import { saveRecord, getRecordByDate } from '@/services/trackingService';
-import { useAuth } from '@/context/AuthContext';
+
+interface TrackingData {
+  investment: number;
+  sales: number;
+  revenue: number;
+}
 
 interface DailyTrackerProps {
-  onDataSubmit?: (date: Date, data: any) => void;
+  onDataSubmit?: (date: Date, data: TrackingData) => void;
 }
+
+// Mock storage for daily records
+// In a real app, this would be in a database or global state management
+export const dailyRecords: Record<string, TrackingData> = {};
 
 const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
   
   const {
     investment,
@@ -38,17 +45,16 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
     roas
   } = useTrackingCalculations();
 
-  // Carregar dados existentes quando mudar a data
-  useEffect(() => {
+  // Check if there's already data for this day and pre-fill form
+  React.useEffect(() => {
     const dateKey = format(date, 'yyyy-MM-dd');
-    const existingRecord = getRecordByDate(dateKey);
-    
-    if (existingRecord) {
-      setInvestment(existingRecord.investment.toString());
-      setSales(existingRecord.sales.toString());
-      setRevenue(existingRecord.revenue.toString());
+    if (dailyRecords[dateKey]) {
+      const record = dailyRecords[dateKey];
+      setInvestment(record.investment.toString());
+      setSales(record.sales.toString());
+      setRevenue(record.revenue.toString());
     } else {
-      // Limpar formulário se não houver dados para esta data
+      // Clear form if no data exists for this day
       setInvestment('');
       setSales('');
       setRevenue('');
@@ -57,32 +63,23 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user) {
-      toast({
-        title: "Erro ao salvar",
-        description: "Você precisa estar logado para salvar registros.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     setIsSubmitting(true);
 
-    // Converter dados do formulário
-    const data = {
+    // Convert form data
+    const data: TrackingData = {
       investment: investmentValue,
       sales: salesValue,
       revenue: revenueValue,
     };
 
-    // Formatar data como chave para armazenamento
+    // Format date as string key for storage
     const dateKey = format(date, 'yyyy-MM-dd');
 
-    try {
-      // Salvar no serviço
-      saveRecord(dateKey, data);
-      
+    // Save to our mock storage
+    dailyRecords[dateKey] = data;
+
+    // Simulate API call
+    setTimeout(() => {
       if (onDataSubmit) {
         onDataSubmit(date, data);
       }
@@ -92,17 +89,12 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ onDataSubmit }) => {
         description: `Registro para ${format(date, 'PPP', { locale: ptBR })} foi salvo.`,
       });
       
-      console.log("Registro diário salvo:", dateKey, data);
-    } catch (error) {
-      console.error("Erro ao salvar registro:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar os dados.",
-        variant: "destructive"
-      });
-    } finally {
       setIsSubmitting(false);
-    }
+      
+      // In a real app, this would trigger a refetch or state update
+      // For this demo, we're using the dailyRecords object directly
+      console.log("Daily records updated:", dailyRecords);
+    }, 500);
   };
 
   return (

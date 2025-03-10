@@ -1,69 +1,40 @@
 
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/context/AuthContext";
-import { Toaster } from "@/components/ui/toaster";
-
-// Pages
-import Index from '@/pages/Index';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import Plans from '@/pages/Plans';
-import DailyTracking from '@/pages/DailyTracking';
-import Analytics from '@/pages/Analytics';
-import Records from '@/pages/Records';
-import Profile from '@/pages/Profile';
-import NotFound from '@/pages/NotFound';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import DailyTracking from "./pages/DailyTracking";
+import Analytics from "./pages/Analytics";
+import Records from "./pages/Records";
+import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Router>
-          <AuthProvider>
-            <Routes>
-              {/* Rotas públicas */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/plans" element={<Plans />} />
-              
-              {/* Rotas protegidas */}
-              <Route path="/daily" element={
-                <ProtectedRoute>
-                  <DailyTracking />
-                </ProtectedRoute>
-              } />
-              <Route path="/analytics" element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              } />
-              <Route path="/records" element={
-                <ProtectedRoute>
-                  <Records />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              
-              {/* Rota 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-          </AuthProvider>
-        </Router>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/daily" element={<DailyTracking />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/records" element={<Records />} />
+          <Route path="/profile" element={<Profile />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
